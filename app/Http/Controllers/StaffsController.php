@@ -1,21 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\Schedule; 
 
-class SchedulesController extends Controller
+use Illuminate\Http\Request;
+
+class StaffsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return Inertia::render('Schedules/Index', [
-            'schedules' => Schedule::all(),
-        ]);
-
+     return Inertia::render("Staffs/Index",[
+        "staffs" => Staffs::all(),
+      ]);
     }
 
     /**

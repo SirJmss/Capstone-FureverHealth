@@ -2,6 +2,9 @@
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AppointmentsController;
+use App\Http\Controllers\StaffsController;
+
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -15,6 +18,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource("users", UserController::class);
     Route::resource("schedules", SchedulesController::class);
+    Route::resource("appointments", AppointmentsController::class);
+    Route::resource("staffs", StaffsController::class);
 });
 
 require __DIR__.'/settings.php';
