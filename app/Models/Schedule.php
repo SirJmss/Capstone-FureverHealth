@@ -10,6 +10,17 @@ class Schedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'start_time', 'end_time', 'description', // customize as needed
+        'staff_id',
+        'schedule_date',
+        'start_time',
+        'end_time',
+        'status',
+        'remarks',
     ];
+
+    // Relationship: Schedule belongs to a Staff
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class);
+    }
 }

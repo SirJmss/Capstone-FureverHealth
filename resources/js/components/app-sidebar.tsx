@@ -39,7 +39,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Staffs',
-        href: '/transactions',
+        href: '/staffs',
         icon: Handshake,
     },
 ];
