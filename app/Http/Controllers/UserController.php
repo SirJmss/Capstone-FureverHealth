@@ -18,6 +18,11 @@ class UserController extends Controller
         ]);
     }
 
+        public function create()
+    {
+        return Inertia::render('Users/Create');
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -55,8 +60,8 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
+            'adress' => 'nullable|string|max:255',
             'password' => 'nullable|min:8|confirmed',
-            
         ]);
 
         if (!empty($validated['password'])) {
@@ -79,5 +84,21 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', 'User deleted successfully!');
     }
-    
+
+    /**
+     * Update the logged-in user's own profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user(); // ✅ Get current logged-in user
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $user->update($validated); // ✅ Update user info
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
 }

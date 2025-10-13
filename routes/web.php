@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource("schedules", SchedulesController::class);
     Route::resource("appointments", AppointmentsController::class);
     Route::resource("staffs", StaffsController::class);
+    
 });
 
 require __DIR__.'/settings.php';

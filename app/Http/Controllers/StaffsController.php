@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Staff;
+use App\Models\Staffs;
 use App\Models\Schedule;
 use App\Models\Appointment;
 
@@ -16,7 +16,7 @@ class StaffsController extends Controller
     public function index()
     {
         return Inertia::render('Staffs/Index', [
-            'staffs' => Staff::with(['schedules', 'appointments'])->latest()->get(),
+            'staffs' => Staffs::with(['schedules', 'appointments'])->latest()->get(),
         ]);
     }
 
@@ -46,7 +46,7 @@ class StaffsController extends Controller
             'role' => 'in:admin,veterinarian,groomer,assistant,staff',
         ]);
 
-        Staff::create($validated);
+        Staffs::create($validated);
 
         return redirect()->route('staffs.index')
             ->with('success', 'Staff member added successfully!');
@@ -57,7 +57,7 @@ class StaffsController extends Controller
      */
     public function show($id)
     {
-        $staff = Staff::with(['schedules', 'appointments'])->findOrFail($id);
+        $staff = Staffs::with(['schedules', 'appointments'])->findOrFail($id);
 
         return Inertia::render('Staffs/Show', [
             'staff' => $staff,
@@ -69,7 +69,7 @@ class StaffsController extends Controller
      */
     public function edit($id)
     {
-        $staff = Staff::findOrFail($id);
+        $staff = Staffs::findOrFail($id);
 
         return Inertia::render('Staffs/Edit', [
             'staff' => $staff,
@@ -94,7 +94,7 @@ class StaffsController extends Controller
             'role' => 'in:admin,veterinarian,groomer,assistant,staff',
         ]);
 
-        $staff = Staff::findOrFail($id);
+        $staff = Staffs::findOrFail($id);
         $staff->update($validated);
 
         return redirect()->route('staffs.index')
@@ -106,7 +106,7 @@ class StaffsController extends Controller
      */
     public function destroy($id)
     {
-        $staff = Staff::findOrFail($id);
+        $staff = Staffs::findOrFail($id);
         $staff->delete();
 
         return redirect()->route('staffs.index')

@@ -14,8 +14,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'phone', 
+        'phone',
         'password',
+        'usertype', 
+        'adress',
     ];
 
     protected $hidden = [
@@ -31,15 +33,27 @@ class User extends Authenticatable
         ];
     }
 
-    /** Relationships */
-
+    /** 
+     * 🐾 Relationship: A user (pet owner) can have many pets 
+     */
     public function pets()
     {
         return $this->hasMany(Pet::class);
     }
 
+    /** 
+     * 📅 Relationship: A user can have many appointments 
+     */
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
+    }
+
+    /**
+     * 🧑‍💼 Relationship: If the user is a staff or vet
+     */
+    public function staffProfile()
+    {
+        return $this->hasOne(Staff::class, 'user_id');
     }
 }

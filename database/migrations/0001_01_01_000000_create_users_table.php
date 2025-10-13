@@ -24,14 +24,14 @@ return new class extends Migration
             $table->rememberToken();
 
             // Role / user type - use ENUM for consistency
-            $table->enum('user_type', ['admin', 'pet_owner', 'veterinarian', 'grooming_staff', 'user'])
-                  ->default('user')
+            $table->enum('user_type', ['admin', 'pet_owner', 'veterinarian', 'grooming_staff'])
+                  ->default('pet_owner')
                   ->index();
 
             // Optional profile data (future-proof)
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
-            $table->string('avatar')->nullable(); // profile picture path
+            $table->string('avatar')->nullable(); 
 
             // Status control (soft delete and active/inactive flag)
             $table->boolean('is_active')->default(true);

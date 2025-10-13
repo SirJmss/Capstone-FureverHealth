@@ -68,6 +68,27 @@ export default function Profile({
                                     />
                                 </div>
 
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="phone">Phone Number</Label>
+
+                                    <Input
+                                        id="phone"
+                                        className="mt-1 block w-fulsl"
+                                        defaultValue={auth.user.phone}
+                                        name="phone"
+                                        autoComplete="tel"
+                                        placeholder="Enter your phone number"
+                                    />
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.phone}
+                                    />
+                                </div>
+
+
+
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Email address</Label>
 
