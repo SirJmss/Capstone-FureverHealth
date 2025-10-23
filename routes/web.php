@@ -20,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource("schedules", SchedulesController::class);
     Route::resource("appointments", AppointmentsController::class);
     Route::resource("staffs", StaffsController::class);
+    Route::get('/users/create',[UserController::class, 'create'])->name('user.create');
+    Route::post('/users', [UserController::class, 'store'])->name('user.store');
     
 });
 

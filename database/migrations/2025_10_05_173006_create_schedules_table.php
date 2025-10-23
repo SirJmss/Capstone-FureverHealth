@@ -12,8 +12,8 @@ return new class extends Migration
     $table->id();
 
     // foreign key to staffs
-    $table->foreignId('staff_id')
-          ->constrained('staffs')
+    $table->foreignId('user_id')
+          ->constrained('users')
           ->cascadeOnDelete();
 
     $table->date('schedule_date');

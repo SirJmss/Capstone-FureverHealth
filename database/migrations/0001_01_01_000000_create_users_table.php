@@ -13,41 +13,30 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-
-            // Basic user info
-            $table->string('name');
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('email')->unique();
+            $table->string('user_type')->default('user');; 
             $table->timestamp('email_verified_at')->nullable();
-
-            // Authentication
             $table->string('password');
             $table->rememberToken();
-
-            // Role / user type - use ENUM for consistency
-            $table->enum('user_type', ['admin', 'pet_owner', 'veterinarian', 'grooming_staff'])
-                  ->default('pet_owner')
-                  ->index();
-
-            // Optional profile data (future-proof)
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->string('avatar')->nullable(); 
 
-            // Status control (soft delete and active/inactive flag)
             $table->boolean('is_active')->default(true);
-            $table->softDeletes(); // adds deleted_at column
+            $table->softDeletes(); 
 
             $table->timestamps();
         });
 
-        // Password reset tokens
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        // Session tracking (for "remember me" and login history)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();

@@ -17,7 +17,6 @@ return new class extends Migration
             // Relationships
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Pet owner
             $table->foreignId('pet_id')->constrained()->onDelete('cascade');  // Pet
-            $table->foreignId('staff_id')->nullable()->constrained('staffs')->onDelete('set null'); // Groomer or Vet
 
             // Appointment details
             $table->dateTime('appointment_date'); // Scheduled date and time

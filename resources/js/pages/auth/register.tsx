@@ -25,18 +25,37 @@ export default function Register() {
             >
                 {({ processing, errors }) => (
                     <>
+                        <Input type="hidden" name="user_type" value="user" />
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">First Name</Label>
                                 <Input
-                                    id="name"
+                                    id="first_name"
                                     type="text"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
+                                    name="first_name"
+                                    placeholder="First Name"
+                                />
+                                <InputError
+                                    message={errors.name}
+                                    className="mt-2"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Last Name</Label>
+                                <Input
+                                    id="last_name"
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    autoComplete="name"
+                                    name="last_name"
+                                    placeholder="Last name"
                                 />
                                 <InputError
                                     message={errors.name}

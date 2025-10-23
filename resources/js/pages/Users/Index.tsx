@@ -1,13 +1,14 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 type User = {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  adress: string;
-  user_type: string;
+  address: string;
   phone: string;
   is_active: boolean;
 };
@@ -31,20 +32,19 @@ export default function Index({ users }: Props) {
       <div className="p-6"> {/* ✅ Proper padding container */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-semibold">User List</h1>
-          <button className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
+          <Link href={route('user.create')}><button className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
             Create
-          </button>
+          </button></Link>
         </div>
 
         <div className="overflow-x-auto rounded-lg shadow-sm">
           <table className="min-w-full border border-gray-300 text-sm">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-200">
               <tr>
                 <th className="border px-4 py-2 text-left">ID</th>
                 <th className="border px-4 py-2 text-left">Name</th>
                 <th className="border px-4 py-2 text-left">Email</th>
                 <th className="border px-4 py-2 text-left">Address</th>
-                <th className="border px-4 py-2 text-left">User Type</th>
                 <th className="border px-4 py-2 text-left">Phone</th>
                 <th className="border px-4 py-2 text-center">Status</th>
               </tr>
@@ -53,10 +53,10 @@ export default function Index({ users }: Props) {
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-2">{user.id}</td>
-                  <td className="border px-4 py-2">{user.name}</td>
+                  <td className="border px-4 py-2">{user.first_name}</td>
+                  <td className="border px-4 py-2">{user.last_name}</td>
                   <td className="border px-4 py-2">{user.email}</td>
-                  <td className="border px-4 py-2">{user.adress}</td>
-                  <td className="border px-4 py-2">{user.user_type}</td>
+                  <td className="border px-4 py-2">{user.address}</td>
                   <td className="border px-4 py-2">{user.phone}</td>
                   <td className="border px-4 py-2 text-center">
                     <span

@@ -23,22 +23,22 @@ class UserController extends Controller
         return Inertia::render('Users/Create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+   
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
+            'user_type' => 'required|string|max:255',
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
 
         $user = User::create($validated);
 
-        return redirect()->back()->with('success', 'User created successfully!');
+        return Inertia::render('Users/Index');
     }
 
     /**
@@ -57,7 +57,8 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'first-name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'adress' => 'nullable|string|max:255',
@@ -93,7 +94,7 @@ class UserController extends Controller
         $user = auth()->user(); // ✅ Get current logged-in user
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
 
