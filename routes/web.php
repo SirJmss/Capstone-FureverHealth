@@ -1,9 +1,9 @@
 <?php
+
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentsController;
-
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -15,12 +15,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    Route::resource("users", UserController::class);
-    Route::resource("schedules", SchedulesController::class);
-    Route::resource("appointments", AppointmentsController::class);
-    Route::get('/users/create',[UserController::class, 'create'])->name('user.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    
+    // === CLEAN: Use resource + only override if needed ===
+    Route::resource('users', UserController::class);
+    Route::resource('schedules', SchedulesController::class);
+    Route::resource('appointments', AppointmentsController::class);
+
+    // Optional: Only if you need custom names (not recommended)
+    // Route::resource('users', UserController::class)->names([
+    //     'create' => 'users.create',
+    //     'store'  => 'users.store',
+    //     'edit'   => 'users.edit',
+    //     'show'   => 'users.show',
+    //     'destroy'=> 'users.destroy',
+    // ]);
 });
 
 require __DIR__.'/settings.php';
