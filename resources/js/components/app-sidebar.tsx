@@ -37,11 +37,7 @@ const mainNavItems: NavItem[] = [
         href: '/appointments',
         icon: Clock,
     },
-    {
-        title: 'Staffs',
-        href: '/staffs',
-        icon: Handshake,
-    },
+
 ];
 
 const footerNavItems: NavItem[] = [

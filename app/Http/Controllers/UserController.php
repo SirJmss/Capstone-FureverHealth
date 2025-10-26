@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Hash;
 
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+
 
 class UserController extends Controller
 {
@@ -24,22 +26,35 @@ class UserController extends Controller
     }
 
    
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'user_type' => 'required|string|max:255',
-        ]);
 
-        $validated['password'] = bcrypt($validated['password']);
 
-        $user = User::create($validated);
 
-        return Inertia::render('Users/Index');
-    }
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name'  => 'required|string|max:255',
+        'email'      => 'required|email|unique:users,email',
+        'phone'      => 'required|string|max:20',
+        'password'   => 'required|string|min:8',
+        'user_type'  => 'required|string',
+    ]);
+
+    // Hash the password
+    $validated['password'] = Hash::make($validated['password']);
+
+    // Create the user
+    User::create($validated);
+
+    return to_route('users.index')->with('success', 'User created successfully!');
+}
+
+
+
+
+
+
 
     /**
      * Display the specified resource.

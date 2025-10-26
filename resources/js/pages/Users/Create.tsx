@@ -1,14 +1,16 @@
-import { Head, useForm } from '@inertiajs/react';
-import InputError from '@/components/input-error';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { route } from 'ziggy-js';
+import InputError from '@/components/input-error';
+import { motion } from 'framer-motion';
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Create User', href: '/create' },
+  { title: 'Users', href: '/users' },
+  { title: 'Create User', href: '/users/create' },
 ];
 
 export default function Create() {
@@ -18,111 +20,132 @@ export default function Create() {
     email: '',
     phone: '',
     password: '',
-    user_type: 'user',
+    user_type: 'admin',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post(route('users.store'));
-    
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create User" />
-      <div className="w-8/12 p-4">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div>
-            <Label htmlFor="first_name">First Name</Label>
-            <Input
-              id="first_name"
-              name="first_name"
-              required
-              placeholder="First Name"
-              value={data.first_name}
-              onChange={(e) => setData('first_name', e.target.value)}
-            />
-            <InputError message={errors.first_name} />
-          </div>
 
-          <div>
-            <Label htmlFor="last_name">Last Name</Label>
-            <Input
-              id="last_name"
-              name="last_name"
-              required
-              placeholder="Last Name"
-              value={data.last_name}
-              onChange={(e) => setData('last_name', e.target.value)}
-            />
-            <InputError message={errors.last_name} />
-          </div>
+      <motion.div
+        className="p-8 min-h-[80vh] flex flex-col items-center bg-gradient-to-b from-gray-50 to-white"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Header */}
+        <motion.div
+          className="flex justify-between items-center w-full max-w-3xl mb-8"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
+            Create New User
+          </h1>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="email@example.com"
-              value={data.email}
-              onChange={(e) => setData('email', e.target.value)}
-            />
-            <InputError message={errors.email} />
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              required
-              placeholder="Phone number"
-              value={data.phone}
-              onChange={(e) => setData('phone', e.target.value)}
-            />
-            <InputError message={errors.phone} />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="Password"
-              value={data.password}
-              onChange={(e) => setData('password', e.target.value)}
-            />
-
-          </div>
-
-          <div>
-            <Label htmlFor="user_type">User Type</Label>
-            <select
-              id="user_type"
-              name="user_type"
-              value={data.user_type}
-              onChange={(e) => setData('user_type', e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 w-full focus:ring focus:ring-blue-500"
-              required
+          <Link href={route('users.index')}>
+            <Button
+              variant="outline"
+              className="transition-all duration-300 hover:scale-105 hover:shadow-sm"
             >
-              <option value="user">User</option>
-              <option value="staff">Staff</option>
-              <option value="veterinary">Veterinary</option>
-              <option value="groomer">Groomer</option>
-            </select>
-            <InputError message={errors.user_type} />
-          </div>
+              ← Back
+            </Button>
+          </Link>
+        </motion.div>
 
-          <Button type="submit" disabled={processing} className="mt-4">
-            {processing ? 'Creating...' : 'Create User'}
-          </Button>
-        </form>
-      </div>
+        {/* Form Card */}
+        <motion.div
+          className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-gray-100 p-10"
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dynamic Input Fields */}
+            {[
+              { id: 'first_name', label: 'First Name', type: 'text' },
+              { id: 'last_name', label: 'Last Name', type: 'text' },
+              { id: 'email', label: 'Email', type: 'email' },
+              { id: 'phone', label: 'Phone Number', type: 'tel' },
+              { id: 'password', label: 'Password', type: 'password' },
+            ].map((field, i) => (
+              <motion.div
+                key={field.id}
+                className="flex flex-col"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+              >
+                <Label htmlFor={field.id} className="text-gray-700 mb-1">
+                  {field.label}
+                </Label>
+                <Input
+                  id={field.id}
+                  name={field.id}
+                  type={field.type}
+                  placeholder={`Enter ${field.label}`}
+                  required
+                  value={data[field.id as keyof typeof data]}
+                  onChange={(e) =>
+                    setData(field.id as keyof typeof data, e.target.value)
+                  }
+                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:shadow-md"
+                />
+               <InputError message={errors[field.id as keyof typeof errors]} />
+
+              </motion.div>
+            ))}
+
+            {/* User Type */}
+            <motion.div
+              className="flex flex-col"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.25 }}
+            >
+              <Label htmlFor="user_type" className="text-gray-700 mb-1">
+                User Type
+              </Label>
+              <select
+                id="user_type"
+                name="user_type"
+                value={data.user_type}
+                onChange={(e) => setData('user_type', e.target.value)}
+                className="border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-all duration-300"
+              >
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+              <InputError message={errors.user_type} />
+            </motion.div>
+
+            {/* Spacer for grid alignment */}
+            <div className="hidden md:block" />
+
+            {/* Submit Button */}
+            <motion.div
+              className="md:col-span-2 flex justify-end mt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Button
+                type="submit"
+                disabled={processing}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-blue-200"
+              >
+                {processing ? 'Creating...' : 'Create User'}
+              </Button>
+            </motion.div>
+          </form>
+        </motion.div>
+      </motion.div>
     </AppLayout>
   );
 }

@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import { motion } from 'framer-motion';
 
 type User = {
   id: number;
@@ -18,10 +19,7 @@ type Props = {
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Users',
-    href: '/users',
-  },
+  { title: 'Users', href: '/users' },
 ];
 
 export default function Index({ users }: Props) {
@@ -29,50 +27,86 @@ export default function Index({ users }: Props) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Users" />
 
-      <div className="p-6"> {/* ✅ Proper padding container */}
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-semibold">User List</h1>
-          <Link href={route('user.create')}><button className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
-            Create
-          </button></Link>
-        </div>
+      <motion.div
+        className="p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Header */}
+        <motion.div
+          className="flex justify-between items-center mb-6"
+          initial={{ y: -15, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1 className="text-2xl font-semibold text-gray-800">User List</h1>
+          <Link href={route('user.create')}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
+            >
+              + Create User
+            </motion.button>
+          </Link>
+        </motion.div>
 
-        <div className="overflow-x-auto rounded-lg shadow-sm">
-          <table className="min-w-full border border-gray-300 text-sm">
-            <thead className="bg-gray-200">
+        {/* Table */}
+        <motion.div
+          className="overflow-x-auto rounded-2xl shadow-md bg-white border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <table className="min-w-full border-collapse">
+            <thead className="bg-gray-100 border-b">
               <tr>
-                <th className="border px-4 py-2 text-left">ID</th>
-                <th className="border px-4 py-2 text-left">Name</th>
-                <th className="border px-4 py-2 text-left">Email</th>
-                <th className="border px-4 py-2 text-left">Address</th>
-                <th className="border px-4 py-2 text-left">Phone</th>
-                <th className="border px-4 py-2 text-center">Status</th>
+                {['ID', 'Name', 'Surname', 'Email', 'Address', 'Phone', 'Status'].map(
+                  (header) => (
+                    <th
+                      key={header}
+                      className="text-left px-6 py-3 text-gray-700 text-sm font-semibold"
+                    >
+                      {header}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="border px-4 py-2">{user.id}</td>
-                  <td className="border px-4 py-2">{user.first_name}</td>
-                  <td className="border px-4 py-2">{user.last_name}</td>
-                  <td className="border px-4 py-2">{user.email}</td>
-                  <td className="border px-4 py-2">{user.address}</td>
-                  <td className="border px-4 py-2">{user.phone}</td>
-                  <td className="border px-4 py-2 text-center">
-                    <span
-                      className={`px-2 py-1 rounded text-white font-medium ${
+              {users.map((user, index) => (
+                <motion.tr
+                  key={user.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <td className="px-6 py-3 border-t text-gray-800">{user.id}</td>
+                  <td className="px-6 py-3 border-t text-gray-700">{user.first_name}</td>
+                  <td className="px-6 py-3 border-t text-gray-700">{user.last_name}</td>
+                  <td className="px-6 py-3 border-t text-gray-700">{user.email}</td>
+                  <td className="px-6 py-3 border-t text-gray-700">{user.address}</td>
+                  <td className="px-6 py-3 border-t text-gray-700">{user.phone}</td>
+                  <td className="px-6 py-3 border-t text-center">
+                    <motion.span
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium text-white shadow-sm ${
                         user.is_active ? 'bg-green-500' : 'bg-red-500'
                       }`}
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.2 + index * 0.05 }}
                     >
                       {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    </motion.span>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </AppLayout>
   );
 }
