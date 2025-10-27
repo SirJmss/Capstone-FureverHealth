@@ -30,31 +30,31 @@ const getColorClass = (str: string) => {
    PERMISSION DESCRIPTIONS
 ------------------------------------------------- */
 const permissionDescriptions: Record<string, string> = {
-  'user.view': 'Can view user profiles and lists.',
-  'user.create': 'Can create new users in the system.',
-  'user.edit': 'Can modify existing user information.',
-  'user.delete': 'Can remove user accounts permanently.',
+  'user.view': 'Allows viewing user profiles and lists.',
+  'user.create': 'Allows creating new users in the system.',
+  'user.edit': 'Allows editing user details.',
+  'user.delete': 'Allows deleting existing users.',
 
-  'roles.view': 'Can view all roles and their permissions.',
-  'roles.create': 'Can create new roles.',
-  'roles.edit': 'Can modify existing roles and permissions.',
-  'roles.delete': 'Can delete roles.',
+  'roles.view': 'Allows viewing all roles and their permissions.',
+  'roles.create': 'Allows creating new roles.',
+  'roles.edit': 'Allows modifying existing roles and their permissions.',
+  'roles.delete': 'Allows removing roles permanently.',
 };
 
 /* -------------------------------------------------
    BREADCRUMBS
 ------------------------------------------------- */
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Users', href: '/users' },
+  { title: 'Roles', href: '/roles' },
 ];
 
 /* -------------------------------------------------
    COMPONENT
 ------------------------------------------------- */
-export default function Show({ user }: { user: any }) {
+export default function Show({ role }: { role: any }) {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title={`User – ${user.name}`} />
+      <Head title={`Role – ${role.name}`} />
 
       <motion.div
         className="p-8 min-h-[80vh] flex flex-col items-center bg-gradient-to-b from-gray-50 to-white"
@@ -70,79 +70,43 @@ export default function Show({ user }: { user: any }) {
           transition={{ duration: 0.4 }}
         >
           <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
-            User Details – {user.name}
+            Role Details – {role.name}
           </h1>
 
           <Link
-            href={route('users.index')}
+            href={route('roles.index')}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
           >
             ← Back
           </Link>
         </motion.div>
 
-        {/* ---------- USER INFO CARD ---------- */}
+        {/* ---------- ROLE INFO CARD ---------- */}
         <motion.div
           className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-gray-100 p-10 space-y-6"
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {/* ---- BASIC INFO ---- */}
-          <div className="space-y-2">
-            <p>
-              <strong className="text-gray-700">Name:</strong>{' '}
-              <span className="text-gray-900">{user.name}</span>
+          {/* ---- NAME ---- */}
+          <div>
+            <p className="text-gray-600 text-sm font-medium uppercase tracking-wide mb-1">
+              Role Name
             </p>
-            <p>
-              <strong className="text-gray-700">Email:</strong>{' '}
-              <span className="text-gray-900">{user.email}</span>
+            <p className="text-2xl font-semibold text-gray-900">
+              {role.name}
             </p>
-            {user.phone && (
-              <p>
-                <strong className="text-gray-700">Phone:</strong>{' '}
-                <span className="text-gray-900">{user.phone}</span>
-              </p>
-            )}
-            {user.address && (
-              <p>
-                <strong className="text-gray-700">Address:</strong>{' '}
-                <span className="text-gray-900">{user.address}</span>
-              </p>
-            )}
           </div>
 
-          {/* ---- ROLES ---- */}
-          {user.roles && user.roles.length > 0 && (
-            <div>
-              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide mb-3">
-                Assigned Roles
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {user.roles.map((role: string, i: number) => (
-                  <span
-                    key={i}
-                    className={`px-3 py-1 rounded-full text-sm font-medium border ${getColorClass(
-                      role
-                    )}`}
-                  >
-                    {role}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ---- PERMISSIONS ---- */}
-          {user.permissions && user.permissions.length > 0 ? (
+          {role.permissions && role.permissions.length > 0 ? (
             <div>
               <p className="text-gray-600 text-sm font-medium uppercase tracking-wide mb-3">
-                Permissions
+                Assigned Permissions
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {user.permissions.map((perm: string, index: number) => {
+                {role.permissions.map((perm: string, index: number) => {
                   const color = getColorClass(perm);
                   const description =
                     permissionDescriptions[perm] ||

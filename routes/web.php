@@ -3,7 +3,9 @@
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AppointmentsController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -15,19 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    // === CLEAN: Use resource + only override if needed ===
     Route::resource('users', UserController::class);
     Route::resource('schedules', SchedulesController::class);
     Route::resource('appointments', AppointmentsController::class);
-
-    // Optional: Only if you need custom names (not recommended)
-    // Route::resource('users', UserController::class)->names([
-    //     'create' => 'users.create',
-    //     'store'  => 'users.store',
-    //     'edit'   => 'users.edit',
-    //     'show'   => 'users.show',
-    //     'destroy'=> 'users.destroy',
-    // ]);
+    Route::resource('roles', RoleController::class);
 });
 
 require __DIR__.'/settings.php';

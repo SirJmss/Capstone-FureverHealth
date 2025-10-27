@@ -11,3 +11,4 @@ install these things.
 6. npm install framer-motion
 7. composer require spatie/laravel-permission
 8. npm install framer-motion ziggy-js
+9. 
