@@ -5,27 +5,6 @@ import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
-// === COLOR PALETTE ===
-const colors = [
-  'bg-red-100 text-red-700 border-red-300',
-  'bg-yellow-100 text-yellow-700 border-yellow-300',
-  'bg-green-100 text-green-700 border-green-300',
-  'bg-blue-100 text-blue-700 border-blue-300',
-  'bg-indigo-100 text-indigo-700 border-indigo-300',
-  'bg-purple-100 text-purple-700 border-purple-300',
-  'bg-pink-100 text-pink-700 border-pink-300',
-  'bg-orange-100 text-orange-700 border-orange-300',
-] as const;
-
-// === HASH FUNCTION ===
-const getColorClass = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash % colors.length)];
-};
-
 // === TYPES ===
 type Role = {
   id: number;
@@ -58,11 +37,12 @@ export default function Index({ roles }: Props) {
 
   const confirmDelete = () => {
     if (!roleToDelete) return;
+
     setDeletingId(roleToDelete.id);
 
     router.delete(route('roles.destroy', roleToDelete.id), {
       preserveScroll: true,
-      onSuccess: closeModal,
+      onSuccess: () => closeModal(),
       onError: () => {
         alert('Failed to delete role.');
         closeModal();
@@ -78,37 +58,42 @@ export default function Index({ roles }: Props) {
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeModal}
           >
             <motion.div
-              className="w-full max-w-md bg-white rounded-xl p-6 shadow-2xl"
+              className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-4 text-lg font-semibold text-gray-800">Confirm Delete</h3>
+              <h3 className="mb-4 text-lg font-semibold text-gray-800">
+                Confirm Delete
+              </h3>
               <p className="mb-6 text-gray-600">
-                Delete <strong>{roleToDelete?.name}</strong>? This action cannot be undone.
+                Are you sure you want to delete{' '}
+                <strong>{roleToDelete?.name}</strong>?
+                This action cannot be undone.
               </p>
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={closeModal}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                   disabled={deletingId !== null}
-                  className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
                   disabled={deletingId !== null}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition"
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50"
                 >
-                  {deletingId ? 'Deleting...' : 'Delete'}
+                  {deletingId !== null ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </motion.div>
@@ -116,67 +101,79 @@ export default function Index({ roles }: Props) {
         )}
       </AnimatePresence>
 
-      {/* === MAIN CONTENT === */}
-      <motion.div className="p-6">
-        {/* Header */}
+      {/* === HEADER & CREATE BUTTON === */}
+      <motion.div
+        className="p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <motion.div
           className="flex justify-between items-center mb-6"
           initial={{ y: -15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
         >
           <h1 className="text-2xl font-semibold text-gray-800">Roles List</h1>
+
           <Link href={route('roles.create')}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition"
+              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
             >
               + Create Role
             </motion.button>
           </Link>
         </motion.div>
 
-        {/* Table */}
+        {/* === TABLE === */}
         <motion.div
-          className="bg-white rounded-2xl shadow-md border overflow-hidden"
+          className="overflow-x-auto rounded-2xl shadow-md bg-white border border-gray-100"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
+          <table className="min-w-full border-collapse">
+            <thead className="bg-gray-100 border-b">
               <tr>
-                {['ID', 'Name', 'Permissions', 'Actions'].map((h) => (
-                  <th key={h} className="text-left px-6 py-3 text-sm font-semibold text-gray-700">
-                    {h}
+                {['ID', 'Name', 'Permissions', 'Actions'].map((header) => (
+                  <th
+                    key={header}
+                    className="text-left px-6 py-3 text-gray-700 text-sm font-semibold"
+                  >
+                    {header}
                   </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
-              {roles.length === 0 ? (
+              {!roles?.length ? (
                 <tr>
                   <td colSpan={4} className="text-center py-8 text-gray-500">
                     No roles found.
                   </td>
                 </tr>
               ) : (
-                roles.map((role, i) => (
+                roles.map((role, index) => (
                   <motion.tr
                     key={role.id}
-                    className="hover:bg-blue-50 transition-colors"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="hover:bg-blue-50 transition-colors duration-200"
                   >
                     <td className="px-6 py-3 border-t text-gray-800">{role.id}</td>
-                    <td className="px-6 py-3 border-t text-gray-700 font-medium">{role.name}</td>
+                    <td className="px-6 py-3 border-t text-gray-700">{role.name}</td>
+
                     <td className="px-6 py-3 border-t">
                       <div className="flex flex-wrap gap-1.5">
                         {role.permissions.length > 0 ? (
                           role.permissions.map((perm) => (
                             <span
                               key={perm}
-                              className={`px-3 py-1.5 text-xs font-medium rounded-full border ${getColorClass(perm)}`}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 bg-gray-100"
                             >
                               {perm}
                             </span>
@@ -186,29 +183,37 @@ export default function Index({ roles }: Props) {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-3 border-t">
-                      <div className="flex gap-2 justify-center">
-                        {/* VIEW */}
+
+                    <td className="px-6 py-3 border-t text-center">
+                      <div className="flex justify-center gap-2">
                         <Link href={route('roles.show', role.id)}>
-                          <button className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-full hover:bg-gray-700 transition">
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-gray-500 hover:bg-gray-600 transition shadow-sm"
+                          >
                             View
-                          </button>
+                          </motion.div>
                         </Link>
 
-                        {/* EDIT – NOW A BUTTON, SAME STYLE */}
                         <Link href={route('roles.edit', role.id)}>
-                          <button className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition shadow-sm"
+                          >
                             Edit
-                          </button>
+                          </motion.div>
                         </Link>
 
-                        {/* DELETE */}
-                        <button
+                        <motion.button
                           onClick={() => openDeleteModal(role)}
-                          className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-full hover:bg-red-700 transition"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-red-500 hover:bg-red-600 transition shadow-sm"
                         >
                           Delete
-                        </button>
+                        </motion.button>
                       </div>
                     </td>
                   </motion.tr>

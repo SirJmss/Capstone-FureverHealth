@@ -6,23 +6,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens; 
+
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+       use HasApiTokens, HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
+
 
     protected $fillable = [
         'first_name',
         'last_name',
         'email',
         'phone',
-        'password', 
         'address',
+        'password',
+        'user_type',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+         'two_factor_recovery_codes',
+        'two_factor_secret',
     ];
 
     protected function casts(): array

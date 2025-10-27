@@ -6,22 +6,39 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of users.
      */
-    public function index()
-    {
-        return Inertia::render('Users/Index', [
-            'users' => User::with(['pets', 'appointments'])->get(),
-        ]);
-    }
+   public function index()
+{
+    $users = User::with(['pets', 'appointments'])->get();
+    $authUser = auth()->user();
 
+    return Inertia::render('Users/Index', [
+        'users' => $users,
+        'auth' => [
+            'user' => [
+                'id' => $authUser->id,
+                'roles' => $authUser->roles->pluck('name')->toArray(),
+                'permissions' => $authUser->getAllPermissions()->pluck('name')->toArray(),
+            ],
+        ],
+    ]);
+}
+
+
+    /**
+     * Show the form for creating a new user.
+     */
     public function create()
     {
-        return Inertia::render('Users/Create');
+        return Inertia::render('Users/Create', [
+            'roles' => Role::pluck('name')->toArray(),
+        ]);
     }
 
     /**
@@ -35,94 +52,101 @@ class UserController extends Controller
             'email'      => 'required|email|unique:users,email',
             'phone'      => 'required|string|max:20',
             'password'   => 'required|string|min:8',
-            'user_type'  => 'required|string',
+            'user_type'  => 'required|in:admin,user',
+            'roles'      => 'required|array|min:1',
+            'roles.*'    => 'exists:roles,name',
         ]);
 
-        // ✅ Hash password before saving
         $validated['password'] = Hash::make($validated['password']);
-
-        User::create($validated);
+        $user = User::create($validated);
+        $user->syncRoles($validated['roles']);
 
         return to_route('users.index')->with('success', 'User created successfully!');
     }
 
     /**
-     * Display the specified user.
+     * Display a single user.
      */
-/**
- * Display the specified user.
- */
-public function show(User $user)
-{
-    // Optionally load relations if needed in the Show page
-    $user->load(['pets', 'appointments']);
+    public function show(User $user)
+    {
+        $user->load('roles', 'permissions');
+        $authUser = auth()->user();
 
-    return Inertia::render('Users/Show', [
-        'user' => $user
-    ]);
-}
+        return Inertia::render('Users/Show', [
+            'user' => $user,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'auth' => [
+                'user' => [
+                    'id' => $authUser->id,
+                    'roles' => $authUser->roles->pluck('name')->toArray(),
+                    'permissions' => $authUser->getAllPermissions()->pluck('name')->toArray(),
+                ],
+            ],
+        ]);
+    }
 
     /**
-     * Show the form for editing the specified user.
+     * Show the form for editing a user.
      */
-    public function edit(string $id)
+    public function edit(User $user)
     {
-        $user = User::findOrFail($id);
+        $allRoles = Role::all();
+        $userRoles = $user->roles->pluck('name')->toArray();
+        $authUser = auth()->user();
 
         return Inertia::render('Users/Edit', [
-            'user' => $user,
+            'allRoles' => $allRoles,
+            'user' => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'user_type' => $user->user_type,
+                'roles' => $userRoles,
+            ],
+            'auth' => [
+                'user' => [
+                    'id' => $authUser->id,
+                    'roles' => $authUser->roles->pluck('name')->toArray(),
+                    'permissions' => $authUser->getAllPermissions()->pluck('name')->toArray(),
+                ],
+            ],
         ]);
     }
 
     /**
-     * Update the specified user in storage.
+     * Update a user.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
-        // ✅ Fixed: Find user by ID
-        $user = User::findOrFail($id);
-
-        // ✅ Fixed: Proper validation rules and consistent field names
         $validated = $request->validate([
-            'first_name' => 'sometimes|string|max:255',
-            'last_name'  => 'sometimes|string|max:255',
-            'email'      => 'sometimes|email|unique:users,email,' . $user->id,
-            'phone'      => 'nullable|string|max:20',
-            'address'    => 'nullable|string|max:255',
-            'password'   => 'nullable|string|min:8',
-            'user_type'  => 'nullable|string|in:admin,user',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => "required|email|unique:users,email,{$user->id}",
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,name',
         ]);
 
-        // ✅ Hash password only if provided
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        // ✅ Update user with validated data
         $user->update($validated);
+        $user->syncRoles($validated['roles']);
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully!');
+        return to_route('users.index')->with('success', 'User updated successfully!');
     }
 
     /**
-     * Remove the specified user.
+     * Delete a user.
      */
-    /**
- * Remove the specified user.
- */
-/**
- * Remove the specified user.
- */
-public function destroy(String $id)
-{
-    User::destroy($id);
-    return to_route('users.index');
-}
+    public function destroy(string $id)
+    {
+        User::destroy($id);
+        return to_route('users.index');
+    }
 
     /**
-     * Update the logged-in user's profile.
+     * Update authenticated user's profile.
      */
     public function updateProfile(Request $request)
     {

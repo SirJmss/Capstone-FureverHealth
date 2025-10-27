@@ -8,21 +8,50 @@ import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
 
+// ✅ Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Users', href: '/users' },
-  { title: 'Create User', href: '/users/create' },
+  { title: 'Create User', href: '' },
 ];
 
-export default function Create() {
-  const { data, setData, post, processing, errors } = useForm({
+// ✅ Props type
+interface CreateProps {
+  roles: string[];
+}
+
+// ✅ Component
+export default function Create({ roles }: CreateProps) {
+  // ✅ useForm must be INSIDE the component
+  const { data, setData, post, processing, errors } = useForm<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    password: string;
+    user_type: string;
+    roles: string[];
+  }>({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
     password: '',
-    user_type: 'admin',
+    user_type: 'user',
+    roles: [],
   });
 
+  // ✅ toggleRole handler
+const toggleRole = (role: string) => {
+  // Use the latest `data.roles` directly, not a callback
+  if (data.roles.includes(role)) {
+    setData('roles', data.roles.filter((r) => r !== role));
+  } else {
+    setData('roles', [...data.roles, role]);
+  }
+};
+
+
+  // ✅ submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post(route('users.store'));
@@ -33,118 +62,124 @@ export default function Create() {
       <Head title="Create User" />
 
       <motion.div
-        className="p-8 min-h-[80vh] flex flex-col items-center bg-gradient-to-b from-gray-50 to-white"
+        className="p-6 flex flex-col items-center min-h-[80vh]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.5 }}
       >
-        {/* Header */}
-        <motion.div
-          className="flex justify-between items-center w-full max-w-3xl mb-8"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
-            Create New User
-          </h1>
+        <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-8 border border-gray-200">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-semibold text-gray-800">Create User</h1>
+            <Link href={route('users.index')}>
+              <Button variant="outline" className="px-4">
+                Back
+              </Button>
+            </Link>
+          </div>
 
-          <Link href={route('users.index')}>
-            <Button
-              variant="outline"
-              className="transition-all duration-300 hover:scale-105 hover:shadow-sm"
-            >
-              ← Back
-            </Button>
-          </Link>
-        </motion.div>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* First Name */}
+            <div>
+              <Label htmlFor="first_name">First Name</Label>
+              <Input
+                id="first_name"
+                value={data.first_name}
+                onChange={(e) => setData('first_name', e.target.value)}
+                placeholder="John"
+              />
+              <InputError message={errors.first_name} />
+            </div>
 
-        {/* Form Card */}
-        <motion.div
-          className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-gray-100 p-10"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dynamic Input Fields */}
-            {[
-              { id: 'first_name', label: 'First Name', type: 'text' },
-              { id: 'last_name', label: 'Last Name', type: 'text' },
-              { id: 'email', label: 'Email', type: 'email' },
-              { id: 'phone', label: 'Phone Number', type: 'tel' },
-              { id: 'password', label: 'Password', type: 'password' },
-            ].map((field, i) => (
-              <motion.div
-                key={field.id}
-                className="flex flex-col"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
-              >
-                <Label htmlFor={field.id} className="text-gray-700 mb-1">
-                  {field.label}
-                </Label>
-                <Input
-                  id={field.id}
-                  name={field.id}
-                  type={field.type}
-                  placeholder={`Enter ${field.label}`}
-                  required
-                  value={data[field.id as keyof typeof data]}
-                  onChange={(e) =>
-                    setData(field.id as keyof typeof data, e.target.value)
-                  }
-                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:shadow-md"
-                />
-               <InputError message={errors[field.id as keyof typeof errors]} />
+            {/* Last Name */}
+            <div>
+              <Label htmlFor="last_name">Last Name</Label>
+              <Input
+                id="last_name"
+                value={data.last_name}
+                onChange={(e) => setData('last_name', e.target.value)}
+                placeholder="Doe"
+              />
+              <InputError message={errors.last_name} />
+            </div>
 
-              </motion.div>
-            ))}
+            {/* Email */}
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={data.email}
+                onChange={(e) => setData('email', e.target.value)}
+                placeholder="john@example.com"
+              />
+              <InputError message={errors.email} />
+            </div>
 
-            {/* User Type */}
-            <motion.div
-              className="flex flex-col"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.25 }}
-            >
-              <Label htmlFor="user_type" className="text-gray-700 mb-1">
-                User Type
-              </Label>
-              <select
-                id="user_type"
-                name="user_type"
-                value={data.user_type}
-                onChange={(e) => setData('user_type', e.target.value)}
-                className="border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-all duration-300"
-              >
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-              <InputError message={errors.user_type} />
-            </motion.div>
+            {/* Phone */}
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={data.phone}
+                onChange={(e) => setData('phone', e.target.value)}
+                placeholder="+1234567890"
+              />
+              <InputError message={errors.phone} />
+            </div>
 
-            {/* Spacer for grid alignment */}
-            <div className="hidden md:block" />
+            {/* Password */}
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={data.password}
+                onChange={(e) => setData('password', e.target.value)}
+                placeholder="********"
+              />
+              <InputError message={errors.password} />
+            </div>
+            
+            {/* Roles */}
+            <div>
+              <Label>Roles</Label>
+              <div className="mt-2 space-y-2">
+                {roles.length === 0 ? (
+                  <p className="text-sm text-gray-500">No roles available.</p>
+                ) : (
+                  roles.map((role) => (
+                    <label
+                      key={role}
+                      className="flex items-center gap-2 text-gray-700 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={data.roles.includes(role)}
+                        onChange={() => toggleRole(role)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="capitalize">{role}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+              <InputError message={errors.roles} />
+            </div>
 
-            {/* Submit Button */}
-            <motion.div
-              className="md:col-span-2 flex justify-end mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
+            {/* Submit */}
+            <div className="pt-4">
               <Button
                 type="submit"
                 disabled={processing}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-blue-200"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
               >
                 {processing ? 'Creating...' : 'Create User'}
               </Button>
-            </motion.div>
+            </div>
           </form>
-        </motion.div>
+        </div>
       </motion.div>
     </AppLayout>
   );

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
@@ -24,13 +24,19 @@ type Props = {
 // === BREADCRUMBS ===
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
+// === SAFE USECAN HOOK ===
+function useCan(permission: string): boolean {
+  const { auth } = usePage().props as { auth?: { permissions?: string[] } };
+  return auth?.permissions?.includes(permission) ?? false;
+}
+
 export default function Index({ users }: Props) {
-  // === MODAL STATE ===
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
-  // === DELETE HANDLER WITH MODAL ===
+  const canCreate = useCan('users.create');
+
   const openDeleteModal = (user: User) => {
     setUserToDelete(user);
     setIsModalOpen(true);
@@ -49,9 +55,7 @@ export default function Index({ users }: Props) {
 
     router.delete(route('users.destroy', userToDelete.id), {
       preserveScroll: true,
-      onSuccess: () => {
-        closeModal();
-      },
+      onSuccess: () => closeModal(),
       onError: () => {
         alert('Failed to delete user.');
         closeModal();
@@ -59,12 +63,11 @@ export default function Index({ users }: Props) {
     });
   };
 
-  // === JSX RETURN ===
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Users" />
 
-      {/* === MODAL === */}
+      {/* === DELETE MODAL === */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -113,8 +116,13 @@ export default function Index({ users }: Props) {
         )}
       </AnimatePresence>
 
-      <motion.div className="p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
-        {/* === HEADER === */}
+      {/* === HEADER & CREATE BUTTON === */}
+      <motion.div
+        className="p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <motion.div
           className="flex justify-between items-center mb-6"
           initial={{ y: -15, opacity: 0 }}
@@ -123,15 +131,17 @@ export default function Index({ users }: Props) {
         >
           <h1 className="text-2xl font-semibold text-gray-800">User List</h1>
 
-          <Link href={route('users.create')}>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
-            >
-              + Create User
-            </motion.button>
-          </Link>
+          {canCreate && (
+            <Link href={route('users.create')}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
+              >
+                + Create User
+              </motion.button>
+            </Link>
+          )}
         </motion.div>
 
         {/* === TABLE === */}
@@ -153,7 +163,7 @@ export default function Index({ users }: Props) {
             </thead>
 
             <tbody>
-              {users.length === 0 ? (
+              {!users?.length ? (
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-gray-500">
                     No users found.
@@ -189,33 +199,27 @@ export default function Index({ users }: Props) {
                     </td>
 
                     <td className="px-6 py-3 border-t text-center">
-                      <motion.div
-                        className="flex justify-center gap-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
+                      <div className="flex justify-center gap-2">
                         <Link href={route('users.show', user.id)}>
-                          <motion.button
+                          <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-gray-500 hover:bg-gray-600 transition shadow-sm"
                           >
                             View
-                          </motion.button>
+                          </motion.div>
                         </Link>
 
                         <Link href={route('users.edit', user.id)}>
-                          <motion.button
+                          <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition shadow-sm"
                           >
                             Edit
-                          </motion.button>
+                          </motion.div>
                         </Link>
 
-                        {/* DELETE BUTTON OPENS MODAL */}
                         <motion.button
                           onClick={() => openDeleteModal(user)}
                           whileHover={{ scale: 1.05 }}
@@ -224,7 +228,7 @@ export default function Index({ users }: Props) {
                         >
                           Delete
                         </motion.button>
-                      </motion.div>
+                      </div>
                     </td>
                   </motion.tr>
                 ))
