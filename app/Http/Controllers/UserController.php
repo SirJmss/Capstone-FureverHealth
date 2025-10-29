@@ -13,23 +13,22 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-   public function index()
-{
-    $users = User::with(['pets', 'appointments'])->get();
-    $authUser = auth()->user();
+    public function index()
+    {
+        $users = User::with(['pets', 'appointments'])->get();
+        $authUser = auth()->user();
 
-    return Inertia::render('Users/Index', [
-        'users' => $users,
-        'auth' => [
-            'user' => [
-                'id' => $authUser->id,
-                'roles' => $authUser->roles->pluck('name')->toArray(),
-                'permissions' => $authUser->getAllPermissions()->pluck('name')->toArray(),
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+            'auth' => [
+                'user' => [
+                    'id' => $authUser->id,
+                    'roles' => $authUser->roles->pluck('name')->toArray(),
+                    'permissions' => $authUser->getAllPermissions()->pluck('name')->toArray(),
+                ],
             ],
-        ],
-    ]);
-}
-
+        ]);
+    }
 
     /**
      * Show the form for creating a new user.
@@ -52,7 +51,6 @@ class UserController extends Controller
             'email'      => 'required|email|unique:users,email',
             'phone'      => 'required|string|max:20',
             'password'   => 'required|string|min:8',
-            'user_type'  => 'required|in:admin,user',
             'roles'      => 'required|array|min:1',
             'roles.*'    => 'exists:roles,name',
         ]);
@@ -104,7 +102,6 @@ class UserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'address' => $user->address,
-                'user_type' => $user->user_type,
                 'roles' => $userRoles,
             ],
             'auth' => [

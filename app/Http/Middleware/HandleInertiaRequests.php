@@ -2,56 +2,36 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
-    public function version(Request $request): ?string
+    public function share(Request $request): array
     {
-        return parent::version($request);
+        return [
+            ...parent::share($request),
+
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->first_name,
+                    'email' => $request->user()->email,
+                    'phone' => $request->user()->phone ?? null,
+                    'roles' => $request->user()->roles->pluck('name')->toArray(),
+                    'permissions' => $request->user()
+                        ? $request->user()->getAllPermissions()->pluck('name')
+                        : [],
+                ] : null,
+            ],
+
+            'ziggy' => fn () => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
+            ],
+        ];
     }
-
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
-// app/Http/Middleware/HandleInertiaRequests.php
-
- // Example Inertia share in HandleInertiaRequests.php
-// app/Http/Middleware/HandleInertiaRequests.php
-public function share(Request $request)
-{
-    return array_merge(parent::share($request), [
-        'auth' => [
-            'user' => $request->user() ? [
-                'id' => $request->user()->id,
-                'roles' => $request->user()->roles->pluck('name')->toArray(),
-                'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
-            ] : null,
-        ],
-    ]);
-}
-
-
-
-
 }

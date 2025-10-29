@@ -1,9 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { can } from '@/lib/can';
+
 
 // === TYPES ===
 type User = {
@@ -24,18 +26,10 @@ type Props = {
 // === BREADCRUMBS ===
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
-// === SAFE USECAN HOOK ===
-function useCan(permission: string): boolean {
-  const { auth } = usePage().props as { auth?: { permissions?: string[] } };
-  return auth?.permissions?.includes(permission) ?? false;
-}
-
 export default function Index({ users }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-
-  const canCreate = useCan('users.create');
 
   const openDeleteModal = (user: User) => {
     setUserToDelete(user);
@@ -131,17 +125,22 @@ export default function Index({ users }: Props) {
         >
           <h1 className="text-2xl font-semibold text-gray-800">User List</h1>
 
-          {canCreate && (
-            <Link href={route('users.create')}>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
-              >
-                + Create User
-              </motion.button>
-            </Link>
-          )}
+
+
+
+          <Link href={route('users.create')}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
+            >
+              + Create User
+            </motion.button>
+          </Link>
+
+
+
+
         </motion.div>
 
         {/* === TABLE === */}
