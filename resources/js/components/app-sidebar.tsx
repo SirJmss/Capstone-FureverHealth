@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Users, CalendarCheck2, Clock,Stamp } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -21,29 +21,38 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+        permission: 'Access-dashboard',
     },
     {
         title: 'Users',
         href: '/users',
         icon: Users,
+        permission: 'Access-Users',
     },
     {   
          title: 'Roles',
         href: '/roles',
         icon: Stamp,
-
+        permission: 'Access-Roles'
     },
     {
         title: 'Apppointments',
         href: '/appointments',
         icon: Clock,
+        permission: 'Access-Appointments'
     },
     {
         title: 'Schedules',
         href: '/schedules',
         icon: CalendarCheck2,
+        permission: 'Access-Schedules'
     },
-
+        {
+        title: 'Permissions',
+        href: '/permissions',
+        icon: CalendarCheck2,
+        permission: 'Access-Permissions'
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -60,6 +69,13 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    
+    const { auth } = usePage().props as any;
+    console.log(auth);
+    const permissions = auth.permissions || [];
+    const permissionNames = permissions.map(permission=>permission.name);
+    const filteredNavItems = mainNavItems.filter((item)=>!item.permission||permissionNames.includes(item.permission));
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -67,10 +83,10 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={dashboard()} prefetch>
-                                <AppLogo />
+                                <AppLogo /> 
                             </Link>
                         </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem> 
                 </SidebarMenu>
             </SidebarHeader>
 

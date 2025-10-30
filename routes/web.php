@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -22,7 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('schedules', SchedulesController::class);
     Route::resource('appointments', AppointmentsController::class);
     Route::resource('roles', RoleController::class);
-    
+    Route::resource('permissions', PermissionController::class);
 });
 
 require __DIR__.'/settings.php';
