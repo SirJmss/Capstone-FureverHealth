@@ -15,3 +15,4 @@ install these things.
 10. php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
 11. composer require tightenco/ziggy
 12. composer require spatie/laravel-permission
+13. php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
