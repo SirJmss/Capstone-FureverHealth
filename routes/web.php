@@ -7,14 +7,14 @@ use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
+// === Default Laravel Welcome Page ===
 Route::get('/', function () {
-    return Inertia::render('Welcome'); // Capital W
+    return Inertia\Inertia::render('Welcome'); // Capital W, matches resources/js/Pages/Welcome.tsx
 })->name('home');
 
+// === Authenticated Routes ===
 Route::middleware(['auth', 'verified'])->group(function () {
-    // ONLY ONE DASHBOARD ROUTE
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
@@ -25,5 +25,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('permissions', PermissionController::class);
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+// === Other Required Route Files ===
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';
