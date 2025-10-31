@@ -5,19 +5,18 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
-
-
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('Welcome'); // Capital W
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    // ONLY ONE DASHBOARD ROUTE
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::resource('users', UserController::class);
     Route::resource('schedules', SchedulesController::class);

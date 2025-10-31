@@ -17,3 +17,5 @@ install these things.
 12. composer require tightenco/ziggy
 13. composer require spatie/laravel-permission
 14. php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+15. npm install chart.js react-chartjs-2 framer-motion
+16. npm install chart.js react-chartjs-2

@@ -7,13 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
-use Laravel\Sanctum\HasApiTokens; 
-
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-       use HasApiTokens, HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
-
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
 
     protected $fillable = [
         'first_name',
@@ -28,7 +26,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-         'two_factor_recovery_codes',
+        'two_factor_recovery_codes',
         'two_factor_secret',
     ];
 
@@ -40,25 +38,16 @@ class User extends Authenticatable
         ];
     }
 
-    /** 
-     * 🐾 Relationship: A user (pet owner) can have many pets 
-     */
     public function pets()
     {
         return $this->hasMany(Pet::class);
     }
 
-    /** 
-     * 📅 Relationship: A user can have many appointments 
-     */
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
     }
 
-    /**
-     * 🧑‍💼 Relationship: If the user is a staff or vet
-     */
     public function staffProfile()
     {
         return $this->hasOne(Staff::class, 'user_id');
