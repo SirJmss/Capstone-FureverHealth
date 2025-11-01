@@ -139,17 +139,25 @@ export default function Dashboard({
 
         {/* === CHARTS === */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4">
-            <Pie data={pieData} options={pieOptions} />
-          </motion.div>
-          <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4">
-            <Line data={lineData} options={lineOptions} />
-          </motion.div>
-        </div>
+  <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
+    <div className="w-full max-w-[400px] h-[250px]">
+      <Pie data={pieData} options={pieOptions} />
+    </div>
+  </motion.div>
 
-        <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4">
-          <Bar data={barData} options={barOptions} />
-        </motion.div>
+  <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
+    <div className="w-full max-w-[500px] h-[250px]">
+      <Line data={lineData} options={lineOptions} />
+    </div>
+  </motion.div>
+</div>
+
+<motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
+  <div className="w-full max-w-[600px] h-[300px]">
+    <Bar data={barData} options={barOptions} />
+  </div>
+</motion.div>
+
 
         {/* === RECENT USERS === */}
         <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border">

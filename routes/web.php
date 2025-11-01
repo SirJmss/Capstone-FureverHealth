@@ -7,10 +7,13 @@ use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-// === Default Laravel Welcome Page ===
+// === Redirect home to /login (or /dashboard if logged in) ===
 Route::get('/', function () {
-    return Inertia\Inertia::render('Welcome'); // Capital W, matches resources/js/Pages/Welcome.tsx
+    return Auth::check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login'); // 👈 use redirect, not Inertia::render
 })->name('home');
 
 // === Authenticated Routes ===
