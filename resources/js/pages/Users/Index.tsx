@@ -125,9 +125,7 @@ export default function Index({ users }: Props) {
         >
           <h1 className="text-2xl font-semibold text-gray-800">User List</h1>
 
-
-
-
+          {can('users.create') && 
           <Link href={route('users.create')}>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -136,11 +134,8 @@ export default function Index({ users }: Props) {
             >
               + Create User
             </motion.button>
-          </Link>
-
-
-
-
+          </Link>}
+          
         </motion.div>
 
         {/* === TABLE === */}
@@ -199,7 +194,7 @@ export default function Index({ users }: Props) {
 
                     <td className="px-6 py-3 border-t text-center">
                       <div className="flex justify-center gap-2">
-                        <Link href={route('users.show', user.id)}>
+                      {can('users.view') && <Link href={route('users.show', user.id)}>
                           <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -207,9 +202,8 @@ export default function Index({ users }: Props) {
                           >
                             View
                           </motion.div>
-                        </Link>
-
-                        <Link href={route('users.edit', user.id)}>
+                        </Link> } 
+                        {can('users.edit')&& <Link href={route('users.edit', user.id)}>
                           <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -217,16 +211,18 @@ export default function Index({ users }: Props) {
                           >
                             Edit
                           </motion.div>
-                        </Link>
+                        </Link>}
+                        
 
-                        <motion.button
+                        {can('users.delete') && <motion.button
                           onClick={() => openDeleteModal(user)}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-red-500 hover:bg-red-600 transition shadow-sm"
                         >
                           Delete
-                        </motion.button>
+                        </motion.button>}
+                        
                       </div>
                     </td>
                   </motion.tr>

@@ -4,34 +4,30 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
+    /**
+     * The root template that is loaded on the first page visit.
+     */
     protected $rootView = 'app';
 
+    /**
+     * Define the props that are shared by default with Inertia responses.
+     */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
-
+        return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->first_name,
-                    'email' => $request->user()->email,
-                    'phone' => $request->user()->phone ?? null,
-                    'roles' => $request->user()->roles->pluck('name')->toArray(),
-                    'permissions' => $request->user()
-                        ? $request->user()->getAllPermissions()->pluck('name')
-                        : [],
+                    'id'          => $request->user()->id,
+                    'first_name'  => $request->user()->first_name,
+                    'last_name'   => $request->user()->last_name,
+                    'email'       => $request->user()->email,
+                    'roles'       => $request->user()->roles->pluck('name')->toArray(),
+                    'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
                 ] : null,
             ],
-
-            'ziggy' => fn () => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
-        ];
+        ]);
     }
 }

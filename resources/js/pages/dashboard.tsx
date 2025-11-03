@@ -50,20 +50,6 @@ export default function Dashboard({
   dailyRegistrations = {},
   monthlyUsers = {},
 }: DashboardProps) {
-  // === PIE CHART ===
-  const pieData = {
-    labels: Object.keys(typeCounts),
-    datasets: [{
-      data: Object.values(typeCounts),
-      backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B'],
-      borderColor: '#fff',
-      borderWidth: 2,
-    }],
-  };
-  const pieOptions = {
-    responsive: true,
-    plugins: { legend: { position: 'bottom' as const }, title: { display: true, text: 'User Types' } },
-  };
 
   // === LINE CHART ===
   const lineLabels = Object.keys(dailyRegistrations).sort();
@@ -138,19 +124,7 @@ export default function Dashboard({
         </div>
 
         {/* === CHARTS === */}
-        <div className="grid gap-6 lg:grid-cols-2">
-  <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
-    <div className="w-full max-w-[400px] h-[250px]">
-      <Pie data={pieData} options={pieOptions} />
-    </div>
-  </motion.div>
 
-  <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
-    <div className="w-full max-w-[500px] h-[250px]">
-      <Line data={lineData} options={lineOptions} />
-    </div>
-  </motion.div>
-</div>
 
 <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-4 flex justify-center">
   <div className="w-full max-w-[600px] h-[300px]">
@@ -170,7 +144,7 @@ export default function Dashboard({
                 <table className="min-w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      {['Name', 'Email', 'Phone', 'Type', 'Joined'].map(h => (
+                      {['Name', 'Email', 'Phone', 'Joined'].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {h}
                         </th>
@@ -183,15 +157,6 @@ export default function Dashboard({
                         <td className="px-4 py-3 text-sm font-medium">{u.first_name} {u.last_name}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{u.email}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{u.phone || '—'}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${
-                            u.user_type === 'admin' ? 'bg-red-100 text-red-800' :
-                            u.user_type === 'vet' ? 'bg-green-100 text-green-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
-                            {u.user_type}
-                          </span>
-                        </td>
                         <td className="px-4 py-3 text-sm text-gray-500">{u.created_at}</td>
                       </tr>
                     ))}

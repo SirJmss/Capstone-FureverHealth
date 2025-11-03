@@ -25,7 +25,7 @@ export default function Register() {
             >
                 {({ processing, errors }) => (
                     <>
-                        <Input type="hidden" name="user_type" value="user" />
+  
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">First Name</Label>

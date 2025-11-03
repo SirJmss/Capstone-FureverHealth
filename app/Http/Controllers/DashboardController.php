@@ -46,7 +46,7 @@ class DashboardController extends Controller
             ->pluck('c', 'm')
             ->toArray();
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('dashboard', [
             'totalUsers'        => $totalUsers,
             'newRegistrations'  => $newRegistrations,
             'activeUsers'       => $activeUsers,
