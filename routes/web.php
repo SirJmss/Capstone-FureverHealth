@@ -26,6 +26,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('appointments', AppointmentsController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('permissions', PermissionController::class);
+
+    Route::resource("users", UserController::class)
+    ->only(["create","store"])->middleware("permission:users.create");
+    Route::resource("users", UserController::class)
+    ->only(["create","store"])->middleware("permission:users.edit");
+
 });
 
 // === Other Required Route Files ===

@@ -8,14 +8,14 @@ import { motion } from 'framer-motion';
    COLOR PALETTE + HASH FUNCTION
 ------------------------------------------------- */
 const colors = [
-  'bg-red-100 text-red-700 border-red-300',
-  'bg-yellow-100 text-yellow-700 border-yellow-300',
-  'bg-green-100 text-green-700 border-green-300',
-  'bg-blue-100 text-blue-700 border-blue-300',
-  'bg-indigo-100 text-indigo-700 border-indigo-300',
-  'bg-purple-100 text-purple-700 border-purple-300',
-  'bg-pink-100 text-pink-700 border-pink-300',
-  'bg-orange-100 text-orange-700 border-orange-300',
+  'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
+  'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800',
+  'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
+  'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+  'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800',
+  'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
+  'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800',
+  'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
 ] as const;
 
 const getColorClass = (str: string) => {
@@ -57,7 +57,7 @@ interface PageProps {
   user: UserProps;
   roles: string[];
   permissions: string[];
-  [key: string]: any; // ← ADD THIS LINE
+  [key: string]: any;
 }
 
 /* -------------------------------------------------
@@ -66,109 +66,170 @@ interface PageProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
 /* -------------------------------------------------
-   GET PAGE PROPS (FIXED: OUTSIDE COMPONENT)
-------------------------------------------------- */
-
-/* -------------------------------------------------
    COMPONENT
 ------------------------------------------------- */
 export default function Show() {
   const { user, roles, permissions } = usePage<PageProps>().props;
+
+  const fullName = user.first_name
+    ? `${user.first_name} ${user.last_name || ''}`
+    : user.name || 'Unknown User';
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title={`User – ${user.first_name ?? user.name}`} />
+      <Head title={`User – ${fullName}`} />
 
       <motion.div
-        className="p-8 min-h-[80vh] flex flex-col items-center bg-gradient-to-b from-gray-50 to-white"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        {/* ---------- HEADER ---------- */}
         <motion.div
-          className="flex justify-between items-center w-full max-w-3xl mb-8"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4 }}
+          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
-            User Details – {user.first_name ?? user.name}
-          </h1>
-
-          <Link
-            href={route('users.index')}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition"
-          >
-            Back
-          </Link>
-        </motion.div>
-
-        {/* ---------- USER INFO CARD ---------- */}
-        <motion.div
-          className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-gray-100 p-10 space-y-6"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* ---- BASIC INFO ---- */}
-          <div className="space-y-2">
-            <p>
-              <strong className="text-gray-700">Name:</strong>{' '}
-              <span className="text-gray-900">
-                {user.first_name} {user.last_name}
-              </span>
-            </p>
-            <p>
-              <strong className="text-gray-700">Email:</strong>{' '}
-              <span className="text-gray-900">{user.email}</span>
-            </p>
-            {user.phone && (
-              <p>
-                <strong className="text-gray-700">Phone:</strong>{' '}
-                <span className="text-gray-900">{user.phone}</span>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                User Profile
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {fullName} • ID: #{user.id}
               </p>
-            )}
-            {user.address && (
-              <p>
-                <strong className="text-gray-700">Address:</strong>{' '}
-                <span className="text-gray-900">{user.address}</span>
-              </p>
-            )}
+            </motion.div>
+
+            <Link href={route('users.index')}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Users
+              </motion.div>
+            </Link>
           </div>
 
-          {/* ---- ROLES ---- */}
-          {roles && roles.length > 0 && (
-            <div>
-              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide mb-3">
-                Assigned Roles
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {roles.map((role) => (
-                  <motion.span
-                    key={role}
-                    className={`px-3 py-1 rounded-full text-sm font-medium border ${getColorClass(
-                      role
-                    )}`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {role}
-                  </motion.span>
-                ))}
+          {/* User Info Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Left: Avatar + Info */}
+            <motion.div
+              className="space-y-5"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Avatar */}
+              <div className="flex justify-center md:justify-start">
+                <div className="w-28 h-28 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                  {user.first_name?.[0] || user.name?.[0] || 'U'}
+                  {user.last_name?.[0] || ''}
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* ---- PERMISSIONS ---- */}
+              {/* Basic Info */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Full Name</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{fullName}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{user.email}</p>
+                  </div>
+                </div>
+
+                {user.phone && (
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Phone</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{user.phone}</p>
+                    </div>
+                  </div>
+                )}
+
+                {user.address && (
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Address</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{user.address}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Right: Roles */}
+            <motion.div
+              className="space-y-5"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Assigned Roles</h3>
+                {roles && roles.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {roles.map((role, i) => (
+                      <motion.span
+                        key={role}
+                        className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${getColorClass(
+                          role
+                        )}`}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 + i * 0.05 }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {role.replace(/_/g, ' ')}
+                      </motion.span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">No roles assigned.</p>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Permissions */}
           {permissions && permissions.length > 0 ? (
-            <div>
-              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide mb-3">
-                Permissions
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {permissions.map((perm) => {
+            <motion.div
+              className="mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Permissions</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {permissions.map((perm, i) => {
                   const color = getColorClass(perm);
                   const description =
                     permissionDescriptions[perm] ||
@@ -177,27 +238,33 @@ export default function Show() {
                   return (
                     <motion.div
                       key={perm}
-                      className={`p-4 border rounded-xl flex flex-col gap-1 transition-all ${color}`}
-                      whileHover={{ 
-                        scale: 1.03, 
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.1)' // FIXED: full shadow string
-                      }}
-                      whileTap={{ scale: 0.98 }}
+                      className={`p-4 rounded-xl border-2 flex flex-col gap-1 transition-all ${color} backdrop-blur-sm`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ delay: 0.6 + i * 0.05 }}
+                      whileHover={{
+                        scale: 1.03,
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                      }}
                     >
                       <span className="font-semibold text-sm">{perm}</span>
-                      <span className="text-xs text-gray-600 leading-snug">
+                      <span className="text-xs leading-snug opacity-80">
                         {description}
                       </span>
                     </motion.div>
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
           ) : (
-            <p className="text-gray-500 italic">No permissions assigned.</p>
+            <motion.p
+              className="text-center text-gray-500 dark:text-gray-400 italic mt-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              No permissions assigned.
+            </motion.p>
           )}
         </motion.div>
       </motion.div>

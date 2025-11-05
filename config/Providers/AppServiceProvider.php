@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ✅ This tells Inertia to use resources/views/app.blade.php
+    
         Inertia::setRootView('app');
     }
 }

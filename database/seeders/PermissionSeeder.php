@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission; // ✅ Added import for Permission model
+use Spatie\Permission\Models\Permission;
 
 class PermissionSeeder extends Seeder
 {
@@ -12,23 +12,37 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // ✅ Fixed typo: variable should be $permissions (not $permisison)
         $permissions = [
-            "user.view",
-            "user.create",
-            "user.edit",
-            "user.delete",
+            // User permissions
+            "users.view",
+            "users.create",
+            "users.edit",
+            "users.delete",
+
+            // Role permissions
             "roles.view",
             "roles.create",
             "roles.edit",
             "roles.delete",
-        ]; // ✅ Added missing semicolon at the end of array
 
-        // ✅ Fixed foreach loop syntax — it should use "as $permission"
+            // Appointment permissions
+            "appointments.view",
+            "appointments.create",
+            "appointments.edit",
+            "appointments.delete",
+
+            // Access-level permissions
+            "access.dashboard",
+            "access.roles",
+            "access.users",
+            "access.appointments",
+            "access.schedules",
+            "access.permissions",
+        ];
+
         foreach ($permissions as $permission) {
-            // ✅ Removed incorrect duplicate and broken line
-            // ✅ Correctly create each permission using the Permission model
             Permission::firstOrCreate(['name' => $permission]);
         }
+
     }
 }

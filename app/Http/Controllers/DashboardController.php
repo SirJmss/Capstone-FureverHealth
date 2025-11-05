@@ -12,24 +12,27 @@ class DashboardController extends Controller
     {
         $totalUsers       = User::count();
         $newRegistrations = User::where('created_at', '>=', now()->subDays(30))->count();
-        $activeUsers      = User::where('user_type', '!=', 'inactive')->count();
+        $activeUsers      = User::where('is_active', true)->count(); // ✅ replaced user_type check
 
         $recentUsers = User::latest()
             ->take(5)
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'user_type', 'created_at'])
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'is_active', 'created_at'])
             ->map(fn($u) => [
                 'id'         => $u->id,
                 'first_name' => $u->first_name ?? '',
                 'last_name'  => $u->last_name ?? '',
                 'email'      => $u->email,
                 'phone'      => $u->phone,
-                'user_type'  => $u->user_type ?? 'user',
+                'role'       => $u->getRoleNames()->first() ?? 'No Role', // ✅ show role instead of user_type
+                'status'     => $u->is_active ? 'Active' : 'Inactive',
                 'created_at' => $u->created_at?->format('M j, Y'),
             ]);
 
-        $typeCounts = User::groupBy('user_type')
-            ->selectRaw('COALESCE(user_type, "user") as type, COUNT(*) as count')
-            ->pluck('count', 'type')
+        // ✅ Group by role name instead of user_type
+        $typeCounts = User::with('roles')
+            ->get()
+            ->groupBy(fn($user) => $user->getRoleNames()->first() ?? 'No Role')
+            ->map->count()
             ->toArray();
 
         $dailyRegistrations = User::selectRaw('DATE(created_at) as d, COUNT(*) as c')
@@ -46,7 +49,7 @@ class DashboardController extends Controller
             ->pluck('c', 'm')
             ->toArray();
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('dashboard', [
             'totalUsers'        => $totalUsers,
             'newRegistrations'  => $newRegistrations,
             'activeUsers'       => $activeUsers,

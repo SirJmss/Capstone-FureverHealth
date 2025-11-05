@@ -12,14 +12,14 @@ import { motion } from 'framer-motion';
    COLOR PALETTE + HASH FUNCTION (from Show.tsx)
 ------------------------------------------------- */
 const colors = [
-  'bg-red-100 text-red-700 border-red-300',
-  'bg-yellow-100 text-yellow-700 border-yellow-300',
-  'bg-green-100 text-green-700 border-green-300',
-  'bg-blue-100 text-blue-700 border-blue-300',
-  'bg-indigo-100 text-indigo-700 border-indigo-300',
-  'bg-purple-100 text-purple-700 border-purple-300',
-  'bg-pink-100 text-pink-700 border-pink-300',
-  'bg-orange-100 text-orange-700 border-orange-300',
+  'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
+  'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800',
+  'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
+  'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+  'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800',
+  'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
+  'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800',
+  'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
 ] as const;
 
 const getColorClass = (str: string) => {
@@ -89,96 +89,173 @@ export default function Edit({ user, allRoles }: Props) {
       <Head title={`Edit – ${user.first_name} ${user.last_name}`} />
 
       <motion.div
-        className="p-6 min-h-[80vh] flex flex-col items-center bg-gradient-to-b from-gray-50 to-white"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        {/* Header */}
         <motion.div
-          className="flex justify-between items-center w-full max-w-3xl mb-8"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4 }}
+          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
-            Edit User
-          </h1>
-
-          <Link href={route('users.index')}>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm transition-all hover:shadow-md"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
             >
-              Back
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                Edit User
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {user.first_name} {user.last_name} • #{user.id}
+              </p>
             </motion.div>
-          </Link>
-        </motion.div>
 
-        {/* Form Card */}
-        <motion.div
-          className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-10"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User Fields */}
-            {[
-              { id: 'first_name', label: 'First Name', type: 'text' },
-              { id: 'last_name', label: 'Last Name', type: 'text' },
-              { id: 'email', label: 'Email', type: 'email' },
-              { id: 'phone', label: 'Phone Number', type: 'tel' },
-              { id: 'address', label: 'Address', type: 'text' },
-            ].map((field, i) => (
+            <Link href={route('users.index')}>
               <motion.div
-                key={field.id}
-                className="flex flex-col"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
               >
-                <Label htmlFor={field.id} className="text-sm font-semibold text-gray-700 mb-1.5">
-                  {field.label}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Users
+              </motion.div>
+            </Link>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <motion.div
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Label htmlFor="first_name" className="text-gray-700 dark:text-gray-300 font-medium">
+                  First Name
                 </Label>
                 <Input
-                  id={field.id}
-                  name={field.id}
-                  type={field.type}
-                  placeholder={`Enter ${field.label.toLowerCase()}`}
-                  required
-                  value={data[field.id as keyof typeof data] as string}
-                  onChange={(e) => setData(field.id as keyof typeof data, e.target.value)}
-                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:shadow-lg focus:border-blue-500"
+                  id="first_name"
+                  value={data.first_name}
+                  onChange={(e) => setData('first_name', e.target.value)}
+                  placeholder="John"
+                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <InputError message={errors[field.id as keyof typeof errors]} />
+                <InputError message={errors.first_name} className="mt-1" />
               </motion.div>
-            ))}
 
-            {/* Roles – NOW COLORED LIKE SHOW */}
+              <motion.div
+                initial={{ x: 30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Label htmlFor="last_name" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Last Name
+                </Label>
+                <Input
+                  id="last_name"
+                  value={data.last_name}
+                  onChange={(e) => setData('last_name', e.target.value)}
+                  placeholder="Doe"
+                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <InputError message={errors.last_name} className="mt-1" />
+              </motion.div>
+            </div>
+
+            {/* Email & Phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => setData('email', e.target.value)}
+                  placeholder="john@example.com"
+                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <InputError message={errors.email} className="mt-1" />
+              </motion.div>
+
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  value={data.phone}
+                  onChange={(e) => setData('phone', e.target.value)}
+                  placeholder="+1 234 567 890"
+                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <InputError message={errors.phone} className="mt-1" />
+              </motion.div>
+            </div>
+
+            {/* Address */}
             <motion.div
-              className="flex flex-col md:col-span-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.3 }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
             >
-              <Label className="text-sm font-semibold text-gray-700 mb-3">Roles</Label>
-              <div className="flex flex-wrap gap-2">
+              <Label htmlFor="address" className="text-gray-700 dark:text-gray-300 font-medium">
+                Address
+              </Label>
+              <Input
+                id="address"
+                value={data.address}
+                onChange={(e) => setData('address', e.target.value)}
+                placeholder="123 Main St, City, Country"
+                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <InputError message={errors.address} className="mt-1" />
+            </motion.div>
+
+            {/* Roles – Colored Tags */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.45 }}
+            >
+              <Label className="text-gray-700 dark:text-gray-300 font-medium mb-3">Assign Roles</Label>
+              <div className="flex flex-wrap gap-3">
                 {allRoles.length === 0 ? (
-                  <p className="text-sm text-gray-500">No roles available.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">No roles available.</p>
                 ) : (
-                  allRoles.map((role) => {
+                  allRoles.map((role, i) => {
                     const isActive = data.roles.includes(role.name);
                     const color = getColorClass(role.name);
                     return (
                       <motion.label
                         key={role.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border-2 transition-all cursor-pointer ${
+                          isActive
+                            ? `${color} ring-2 ring-offset-2 ring-current`
+                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                        }`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 + i * 0.05 }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all cursor-pointer ${
-                          isActive ? color : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
-                        }`}
                       >
                         <input
                           type="checkbox"
@@ -186,28 +263,38 @@ export default function Edit({ user, allRoles }: Props) {
                           onChange={() => toggleRole(role.name)}
                           className="sr-only"
                         />
-                        <span>{role.name}</span>
+                        <span className="capitalize">{role.name.replace(/_/g, ' ')}</span>
                       </motion.label>
                     );
                   })
                 )}
               </div>
-              <InputError message={errors.roles} />
+              <InputError message={errors.roles} className="mt-2" />
             </motion.div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <motion.div
-              className="md:col-span-2 flex justify-end mt-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
+              className="pt-6 flex justify-end"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
             >
               <Button
                 type="submit"
                 disabled={processing}
-                className="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-4 focus:ring-blue-300 disabled:opacity-70"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
               >
-                {processing ? 'Updating...' : 'Update User'}
+                {processing ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Updating...
+                  </>
+                ) : (
+                  'Update User'
+                )}
               </Button>
             </motion.div>
           </form>
