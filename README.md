@@ -24,13 +24,11 @@ composer require tightenco/ziggy
 
 php artisan migrate
 
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
-
-php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
-
 php artisan db:seed PermissionSeeder
 
 npm install
+
+php artisan migrate:fresh --seed
 
 npm install framer-motion ziggy-js chart.js react-chartjs-2
 
