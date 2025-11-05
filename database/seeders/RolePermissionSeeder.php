@@ -25,7 +25,7 @@ class RolePermissionSeeder extends Seeder
 
         $staff->syncPermissions([
             'appointments.view',
-            'appointment.create',
+            'appointments.create',
             'access.schedules',
             'access.appointments',
         ]);
