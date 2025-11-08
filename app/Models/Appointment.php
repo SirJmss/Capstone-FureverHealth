@@ -2,31 +2,38 @@
 
 namespace App\Models;
 
-use App\Models\Pet;
-use App\Models\Staff;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Appointment extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'pet_id',
         'user_id',
+        'pet_id',
+        'service_id',
         'appointment_date',
-        'service_type',
         'status',
-        'remarks',
+        'notes',
+        'staff_remarks',    
+        'payment_status',
     ];
+
+    // Relationships
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function pet()
     {
         return $this->belongsTo(Pet::class);
     }
 
-    public function staff()
+    public function service()
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(Service::class);
     }
 }

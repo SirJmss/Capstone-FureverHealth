@@ -3,8 +3,10 @@
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PetController;
 use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('dashboard')
-        : redirect()->route('login'); // 👈 use redirect, not Inertia::render
+        : redirect()->route('login'); //  use redirect, not Inertia::render
 })->name('home');
 
 // === Authenticated Routes ===
@@ -26,12 +28,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('appointments', AppointmentsController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('permissions', PermissionController::class);
+    Route::resource('pets', PetController::class);
+    Route::resource('services', ServiceController::class);
 
     Route::resource("users", UserController::class)
     ->only(["create","store"])->middleware("permission:users.create");
     Route::resource("users", UserController::class)
     ->only(["create","store"])->middleware("permission:users.edit");
 
+    
 });
 
 // === Other Required Route Files ===

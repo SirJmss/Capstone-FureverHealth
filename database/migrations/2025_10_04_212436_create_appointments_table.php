@@ -17,18 +17,10 @@ return new class extends Migration
             // Relationships
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Pet owner
             $table->foreignId('pet_id')->constrained()->onDelete('cascade');  // Pet
-
+            $table->foreignId('service_id')->constrained()->onDelete('cascade');
             // Appointment details
             $table->dateTime('appointment_date'); // Scheduled date and time
-            $table->enum('service_type', [
-                'grooming',
-                'checkup',
-                'vaccination',
-                'consultation',
-                'treatment'
-            ])->default('grooming');
-
-            // Status tracking
+          // Status tracking
             $table->enum('status', [
                 'pending',
                 'confirmed',
@@ -41,7 +33,7 @@ return new class extends Migration
             $table->text('staff_remarks')->nullable(); // Groomer/vet remarks after service
 
             // Payment info (optional but useful)
-            $table->decimal('service_fee', 10, 2)->nullable();
+
             $table->enum('payment_status', [
                 'unpaid',
                 'paid',

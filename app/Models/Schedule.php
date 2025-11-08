@@ -10,7 +10,7 @@ class Schedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'staff_id',
+        'user_id',
         'schedule_date',
         'start_time',
         'end_time',

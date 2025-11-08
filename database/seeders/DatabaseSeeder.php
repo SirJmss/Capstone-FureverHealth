@@ -38,6 +38,16 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $customer = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'first_name' => 'customer',
+                'last_name' => 'User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
         if (!$admin->hasRole('Admin')) {
             $admin->assignRole('Admin');
         }
@@ -46,6 +56,8 @@ class DatabaseSeeder extends Seeder
             $staff->assignRole('Staff');
         }
 
-       
+        if (!$customer->hasRole('Customer')) {
+            $customer->assignRole('Customer');
+        }
     }
 }

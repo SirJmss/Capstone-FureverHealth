@@ -35,12 +35,6 @@ npm install framer-motion ziggy-js chart.js react-chartjs-2
 
 
 
-
-
-
-
-
-
 Furever Health: Grooming System
 
 How to run: Make sure not to reinstall any packages that are already installed. You can check the installed extensions in the composer.json file.
@@ -55,7 +49,7 @@ install these things.
 7. npm install framer-motion
 8. composer require spatie/laravel-permission
 9. npm install framer-motion ziggy-js
-10. php artisan db:seed PermissionSeeder 
+10. php artisan db:seed
 11. composer require laravel/sanctum
 12. php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
 13. composer require tightenco/ziggy

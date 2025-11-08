@@ -31,6 +31,12 @@ class PermissionSeeder extends Seeder
             "appointments.edit",
             "appointments.delete",
 
+            // Pets permissions
+            "pets.view",
+            "pets.create",
+            "pets.edit",
+            "pets.delete",
+
             // Access-level permissions
             "access.dashboard",
             "access.roles",
@@ -38,6 +44,8 @@ class PermissionSeeder extends Seeder
             "access.appointments",
             "access.schedules",
             "access.permissions",
+            "access.pets",
+            "access.services"
         ];
 
         foreach ($permissions as $permission) {

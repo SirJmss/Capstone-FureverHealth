@@ -3,7 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { can } from '@/lib/can';
 
 type User = {
@@ -17,16 +17,33 @@ type User = {
   deleted_at: string | null;
 };
 
+type AuthUser = {
+  id: number;
+  name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  roles: string[];
+  permissions: string[];
+};
+
 type Props = {
   users: User[];
+  auth: {
+    user: AuthUser;
+  };
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
-export default function Index({ users }: Props) {
+export default function Index({ users, auth }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const openDeleteModal = (user: User) => {
     setUserToDelete(user);
@@ -51,6 +68,20 @@ export default function Index({ users }: Props) {
       },
     });
   };
+
+  // Fixed: Use filteredUsers instead of users in the table
+  const filteredUsers = useMemo(() => {
+    const term = search.toLowerCase();
+    const filtered = users.filter(
+      (user) =>
+        user.first_name.toLowerCase().includes(term) ||
+        user.last_name.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term)
+    );
+    return sortOrder === "desc"
+      ? [...filtered].sort((a, b) => b.id - a.id)
+      : [...filtered].sort((a, b) => a.id - b.id);
+  }, [users, search, sortOrder]);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -139,7 +170,25 @@ export default function Index({ users }: Props) {
             </Link>
           )}
         </div>
+        
+        {/* Search + Sort Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-1/3 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
 
+          <button
+            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+            className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600"
+          >
+            Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+          </button>
+        </div>
+        
         {/* Table Card */}
         <motion.div
           className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 overflow-hidden"
@@ -155,7 +204,6 @@ export default function Index({ users }: Props) {
                     <th
                       key={h}
                       className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
-                      style={{ animationDelay: `${i * 0.1}s` }}
                     >
                       {h}
                     </th>
@@ -163,7 +211,7 @@ export default function Index({ users }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!users?.length ? (
+                {!filteredUsers.length ? (
                   <tr>
                     <td colSpan={8} className="text-center py-16 text-gray-500 dark:text-gray-400">
                       <div className="flex flex-col items-center">
@@ -175,7 +223,7 @@ export default function Index({ users }: Props) {
                     </td>
                   </tr>
                 ) : (
-                  users.map((user, index) => (
+                  filteredUsers.map((user, index) => (
                     <motion.tr
                       key={user.id}
                       initial={{ opacity: 0, x: -20 }}

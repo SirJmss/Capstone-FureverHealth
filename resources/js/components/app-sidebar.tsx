@@ -18,8 +18,10 @@ import {
   Folder,
   LayoutGrid,
   Users,
+  PawPrint,
   CalendarCheck2,
   Clock,
+  Stethoscope,
   Stamp,
 } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -41,14 +43,27 @@ const mainNavItems: NavItem[] = [
     title: 'Roles',
     href: '/roles',
     icon: Stamp,
-     permission: 'access.roles',
+    permission: 'access.roles',
 
+  },
+  {
+    title: 'Pets',
+    href: '/pets',
+    icon: PawPrint,
+     permission: 'access.pets',
   },
   {
     title: 'Appointments',
     href: '/appointments',
     icon: Clock,
-    permission: 'access.appointments',
+     permission: 'access.appointments',
+    
+  },
+  {
+    title: 'Services',
+    href: '/services',
+    icon: Stethoscope,
+     permission: 'access.services',
   },
   {
     title: 'Schedules',
@@ -84,12 +99,11 @@ export function AppSidebar() {
   // ✅ read the permissions from backend
   const userPermissions = user?.permissions || [];
 
-  // ✅ filter the items based on user's permission
-  const filteredNavItems = mainNavItems.filter(
-    (item) =>
-      !item.permission ||
-      userPermissions.includes(item.permission)
-  );
+  //  filter the items based on user's permission
+ const filteredNavItems = mainNavItems.filter(
+  (item) =>
+    !item.permission || userPermissions.includes(item.permission)
+);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
