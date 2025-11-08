@@ -14302,3 +14302,4 @@
 #19 C:\\xampp\\htdocs\\Capstone-FureverHealth\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
 #20 {main}
 "} 
+[2025-11-08 16:27:13] local.INFO: After admin check - user_id: {"user_id":3} 

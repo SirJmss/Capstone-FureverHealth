@@ -34,7 +34,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function EditPet({ pet }: Props) {
-  const { data, setData, put, processing, errors, reset } = useForm({
+  const { data, setData, put, processing, errors } = useForm({
     name: pet.name || "",
     species: pet.species || "",
     breed: pet.breed || "",
@@ -50,11 +50,7 @@ export default function EditPet({ pet }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    put(route('pets.update', pet.id), {
-      onSuccess: () => {
-        // Optionally show success message or redirect
-      },
-    });
+    put(route('pets.update', pet.id));
   };
 
   return (
@@ -100,7 +96,8 @@ export default function EditPet({ pet }: Props) {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name & Species Row */}
+
+            {/* Name & Species */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <motion.div
                 initial={{ x: -30, opacity: 0 }}
@@ -139,7 +136,7 @@ export default function EditPet({ pet }: Props) {
               </motion.div>
             </div>
 
-            {/* Breed & Gender Row */}
+            {/* Breed & Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <motion.div
                 initial={{ x: -30, opacity: 0 }}
@@ -180,7 +177,7 @@ export default function EditPet({ pet }: Props) {
               </motion.div>
             </div>
 
-            {/* Age & Weight Row */}
+            {/* Age & Weight */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <motion.div
                 initial={{ x: -30, opacity: 0 }}
@@ -222,7 +219,7 @@ export default function EditPet({ pet }: Props) {
               </motion.div>
             </div>
 
-            {/* Vaccinated Checkbox */}
+            {/* Vaccinated */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -319,7 +316,7 @@ export default function EditPet({ pet }: Props) {
               <InputError message={errors.last_groomed_at} className="mt-1" />
             </motion.div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <motion.div
               className="pt-6"
               initial={{ y: 20, opacity: 0 }}

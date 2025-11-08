@@ -57,7 +57,7 @@ export default function EditAppointment({
   const [showPetModal, setShowPetModal] = useState(false);
   const { auth } = usePage<PageProps>().props;
 
-  // Filter pets to only show those belonging to the current user
+  // Show only user's pets
   const userPets = pets.filter((pet) => pet.user_id === auth.user.id);
   const [petList, setPetList] = useState(userPets);
 
@@ -82,10 +82,6 @@ export default function EditAppointment({
       setPetList((prev) => [...prev, newPet]);
     }
     setShowPetModal(false);
-  };
-
-  const getUserFullName = (user: { first_name: string; last_name: string }) => {
-    return `${user.first_name} ${user.last_name}`;
   };
 
   return (
@@ -122,12 +118,7 @@ export default function EditAppointment({
                 className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Back
               </motion.div>
@@ -136,40 +127,52 @@ export default function EditAppointment({
 
           {/* Form */}
           <form onSubmit={submitAppointment} className="space-y-6">
+
             {/* Pet Selection */}
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-            <Label htmlFor="pet_id" className="text-gray-700 dark:text-gray-300 font-medium">
-                Pet
-            </Label>
-
-            <div className="flex gap-3 mt-2">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.25 }}
+            >
+              <Label htmlFor="pet_id" className="text-gray-700 dark:text-gray-300 font-medium">
+                Select Pet
+              </Label>
+              <div className="flex gap-3 mt-2">
                 <select
-                id="pet_id"
-                value={data.pet_id}
-                onChange={(e) => setData("pet_id", e.target.value)}
-                disabled={!is_admin} // 👈 disables selection if not admin
-                className={`w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 
-                    focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                    bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3
-                    ${!is_admin ? "cursor-not-allowed opacity-70" : ""}`}
+                  id="pet_id"
+                  value={data.pet_id}
+                  onChange={(e) => setData("pet_id", e.target.value)}
+                  className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3"
                 >
-                {/* Only show the pet that matches appointment.pet_id */}
-                {pets
-                    .filter((pet) => pet.id === appointment.pet_id)
-                    .map((pet) => (
+                  <option value="">Select Pet</option>
+                  {petList.map((pet) => (
                     <option key={pet.id} value={pet.id}>
-                        {pet.name}
+                      {pet.name}
                     </option>
-                    ))}
+                  ))}
                 </select>
-
-            </div>
-
-            <InputError message={errors.pet_id} className="mt-1" />
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    type="button"
+                    onClick={() => setShowPetModal(true)}
+                    className="h-12 px-6 rounded-xl bg-gray-600 hover:bg-gray-700 text-white font-medium"
+                  >
+                    + Add Pet
+                  </Button>
+                </motion.div>
+              </div>
+              <InputError message={errors.pet_id} className="mt-1" />
             </motion.div>
 
             {/* Service Selection */}
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               <Label htmlFor="service_id" className="text-gray-700 dark:text-gray-300 font-medium">
                 Select Service
               </Label>
@@ -190,11 +193,12 @@ export default function EditAppointment({
             </motion.div>
 
             {/* Appointment Date */}
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-              <Label
-                htmlFor="appointment_date"
-                className="text-gray-700 dark:text-gray-300 font-medium"
-              >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              <Label htmlFor="appointment_date" className="text-gray-700 dark:text-gray-300 font-medium">
                 Appointment Date & Time
               </Label>
               <Input
@@ -210,7 +214,11 @@ export default function EditAppointment({
             {/* Admin Fields */}
             {is_admin && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
+                <motion.div
+                  initial={{ x: -30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
                   <Label htmlFor="status" className="text-gray-700 dark:text-gray-300 font-medium">
                     Status
                   </Label>
@@ -225,13 +233,15 @@ export default function EditAppointment({
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
-                </div>
+                  <InputError message={errors.status} className="mt-1" />
+                </motion.div>
 
-                <div>
-                  <Label
-                    htmlFor="payment_status"
-                    className="text-gray-700 dark:text-gray-300 font-medium"
-                  >
+                <motion.div
+                  initial={{ x: 30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Label htmlFor="payment_status" className="text-gray-700 dark:text-gray-300 font-medium">
                     Payment Status
                   </Label>
                   <select
@@ -244,12 +254,17 @@ export default function EditAppointment({
                     <option value="paid">Paid</option>
                     <option value="refunded">Refunded</option>
                   </select>
-                </div>
+                  <InputError message={errors.payment_status} className="mt-1" />
+                </motion.div>
               </div>
             )}
 
             {/* Notes */}
-            <div>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300 font-medium">
                 Customer Notes
               </Label>
@@ -258,14 +273,19 @@ export default function EditAppointment({
                 value={data.notes}
                 onChange={(e) => setData("notes", e.target.value)}
                 className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                placeholder="Any special requests or notes for the appointment..."
+                placeholder="Any special requests or notes..."
+                rows={3}
               />
               <InputError message={errors.notes} className="mt-1" />
-            </div>
+            </motion.div>
 
             {/* Staff Remarks */}
             {is_admin && (
-              <div>
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.55 }}
+              >
                 <Label htmlFor="staff_remarks" className="text-gray-700 dark:text-gray-300 font-medium">
                   Staff Remarks
                 </Label>
@@ -274,14 +294,20 @@ export default function EditAppointment({
                   value={data.staff_remarks}
                   onChange={(e) => setData("staff_remarks", e.target.value)}
                   className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                  placeholder="Internal staff notes or observations..."
+                  placeholder="Internal notes..."
+                  rows={3}
                 />
                 <InputError message={errors.staff_remarks} className="mt-1" />
-              </div>
+              </motion.div>
             )}
 
             {/* Submit */}
-            <div className="pt-6">
+            <motion.div
+              className="pt-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
               <Button
                 type="submit"
                 disabled={processing}
@@ -290,19 +316,8 @@ export default function EditAppointment({
                 {processing ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                      />
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                     Updating...
                   </span>
@@ -310,7 +325,7 @@ export default function EditAppointment({
                   "Update Appointment"
                 )}
               </Button>
-            </div>
+            </motion.div>
           </form>
         </motion.div>
       </motion.div>

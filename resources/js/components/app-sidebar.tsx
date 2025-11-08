@@ -16,13 +16,14 @@ import { Link, usePage } from '@inertiajs/react';
 import {
   BookOpen,
   Folder,
-  LayoutGrid,
+  LayoutDashboard,
   Users,
   PawPrint,
   CalendarCheck2,
   Clock,
   Stethoscope,
   Stamp,
+  ShieldCheck,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -30,7 +31,7 @@ const mainNavItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: dashboard(),
-    icon: LayoutGrid,
+    icon: LayoutDashboard,
     permission: 'access.dashboard',
   },
   {
@@ -74,7 +75,7 @@ const mainNavItems: NavItem[] = [
   {
     title: 'Permissions',
     href: '/permissions',
-    icon: CalendarCheck2,
+    icon: ShieldCheck,
     permission: 'access.permissions',
   },
 ];
@@ -82,7 +83,7 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
   {
     title: 'Repository',
-    href: 'https://github.com/laravel/react-starter-kit',
+    href: 'https://github.com/SirJmss/Capstone-FureverHealth.git',
     icon: Folder,
   },
   {

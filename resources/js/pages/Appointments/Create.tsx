@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,12 @@ import { motion } from "framer-motion";
 import { route } from "ziggy-js";
 import PetForm from "@/components/PetForm";
 import InputError from "@/components/input-error";
-import { Link } from "@inertiajs/react";
 import { type BreadcrumbItem } from "@/types";
 
 interface AppointmentProps {
-  pets: { id: number; name: string; user_id: number }[]; // Added user_id to pets
+  pets: { id: number; name: string; user_id: number }[];
   services: { id: number; name: string; price: number }[];
-  users?: { id: number; first_name: string; last_name: string }[]; // Optional, only for admins
+  users?: { id: number; first_name: string; last_name: string }[];
   is_admin: boolean;
 }
 
@@ -33,17 +32,16 @@ interface PageProps {
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Appointments', href: '/appointments' },
-  { title: 'Create Appointment', href: '' },
+  { title: "Appointments", href: "/appointments" },
+  { title: "Create Appointment", href: "" },
 ];
 
 export default function CreateAppointment({ pets, services, users, is_admin }: AppointmentProps) {
   const [showPetModal, setShowPetModal] = useState(false);
-  
   const { auth } = usePage<PageProps>().props;
 
-  // Filter pets to only show those belonging to the current user
-  const userPets = pets.filter(pet => pet.user_id === auth.user.id);
+  // Show only current user's pets
+  const userPets = pets.filter((pet) => pet.user_id === auth.user.id);
   const [petList, setPetList] = useState(userPets);
 
   const { data, setData, post, processing, errors } = useForm({
@@ -54,7 +52,6 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
     status: "pending",
     notes: "",
     staff_remarks: "",
-    service_fee: "",
     payment_status: "unpaid",
   });
 
@@ -64,16 +61,10 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
   };
 
   const handlePetAdded = (newPet: any) => {
-    // Only add the new pet to the list if it belongs to the current user
     if (newPet.user_id === auth.user.id) {
       setPetList((prev) => [...prev, newPet]);
     }
     setShowPetModal(false);
-  };
-
-  // Calculate full name for users
-  const getUserFullName = (user: { first_name: string; last_name: string }) => {
-    return `${user.first_name} ${user.last_name}`;
   };
 
   return (
@@ -90,7 +81,7 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
           className="w-full max-w-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -103,7 +94,7 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
               Create New Appointment
             </motion.h1>
 
-            <Link href={route('appointments.index')}>
+            <Link href={route("appointments.index")}>
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -119,7 +110,6 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
 
           {/* Form */}
           <form onSubmit={submitAppointment} className="space-y-6">
-           
 
             {/* Pet Selection */}
             <motion.div
@@ -148,8 +138,8 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     onClick={() => setShowPetModal(true)}
                     className="h-12 px-6 rounded-xl bg-gray-600 hover:bg-gray-700 text-white font-medium"
                   >
@@ -204,7 +194,7 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
               <InputError message={errors.appointment_date} className="mt-1" />
             </motion.div>
 
-            {/* Status & Payment Status Row - Only show for admin */}
+            {/* Admin Fields */}
             {is_admin && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div
@@ -252,7 +242,6 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
               </div>
             )}
 
-
             {/* Notes */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
@@ -267,13 +256,13 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
                 value={data.notes}
                 onChange={(e) => setData("notes", e.target.value)}
                 className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                placeholder="Any special requests or notes for the appointment..."
+                placeholder="Any special requests or notes..."
                 rows={3}
               />
               <InputError message={errors.notes} className="mt-1" />
             </motion.div>
 
-            {/* Staff Remarks - Only show for admin */}
+            {/* Staff Remarks */}
             {is_admin && (
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
@@ -288,14 +277,14 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
                   value={data.staff_remarks}
                   onChange={(e) => setData("staff_remarks", e.target.value)}
                   className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                  placeholder="Internal staff notes or observations..."
+                  placeholder="Internal notes..."
                   rows={3}
                 />
                 <InputError message={errors.staff_remarks} className="mt-1" />
               </motion.div>
             )}
 
-            {/* Submit Button */}
+            {/* Submit */}
             <motion.div
               className="pt-6"
               initial={{ y: 20, opacity: 0 }}
@@ -316,7 +305,7 @@ export default function CreateAppointment({ pets, services, users, is_admin }: A
                     Creating...
                   </span>
                 ) : (
-                  'Create Appointment'
+                  "Create Appointment"
                 )}
               </Button>
             </motion.div>
