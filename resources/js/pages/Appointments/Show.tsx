@@ -8,12 +8,24 @@ import { PageProps as InertiaPageProps } from "@inertiajs/core";
 /* -------------------------------------------------
    TYPES
 ------------------------------------------------- */
+interface ServiceProps {
+  id: number;
+  name: string;
+  price: number;
+  user: { // Add service user info
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
 interface AppointmentProps {
   id: number;
   appointment_date: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   pet: { id: number; name: string };
-  service: { id: number; name: string; price: number };
+  service: ServiceProps; // Updated to include service user
   user: { id: number; first_name: string; last_name: string; email: string };
 }
 
@@ -148,6 +160,17 @@ export default function ShowAppointment() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     ₱{appointment.service.price.toLocaleString()}
                   </p>
+                  
+                  {/* Service Provider Info */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Service Provider</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {appointment.service.user.first_name} {appointment.service.user.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {appointment.service.user.email}
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 interface Role {
   id: number;
@@ -18,7 +19,7 @@ interface User {
   first_name: string;
   last_name: string;
   email: string;
-  roles: Role[]; // Roles come as an array of role objects
+  roles: Role[];
 }
 
 interface Category {
@@ -26,35 +27,46 @@ interface Category {
   name: string;
 }
 
-interface CreateProps {
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  user_id: number;
+  category_id: number;
+  user?: User;
+  category?: Category;
+}
+
+interface EditProps {
+  service: Service;
   users: User[];
   categories: Category[];
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Services', href: '/services' },
-  { title: 'Create Service', href: '/services/create' },
-];
+export default function Edit({ service, users, categories }: EditProps) {
+  // Move breadcrumbs inside the component where service is available
+  const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Services', href: '/services' },
+    { title: 'Edit Service', href: `/services/${service.id}/edit` },
+  ];
 
-export default function Create({ users, categories }: CreateProps) {
-  const { data, setData, post, processing, errors } = useForm({
-    name: '',
-    description: '',
-    price: '',
-    duration: '',
-    user_id: '',
-    category_id: '',
+  const { data, setData, put, processing, errors } = useForm({
+    name: service.name,
+    description: service.description || '',
+    price: service.price.toString(),
+    duration: service.duration?.toString() || '',
+    user_id: service.user_id?.toString() || '',
+    category_id: service.category_id?.toString() || '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    post(route('services.store'));
-  };
+  const [validationError, setValidationError] = useState<string>('');
 
-  // Filter users to only show pet_groomer and veterinarian roles
+  // Filter users to only show Pet Groomer and Veterinarian roles
   const filteredUsers = users.filter(user => {
     const userRoles = user.roles.map(role => role.name);
-    return userRoles.includes('pet_groomer') || userRoles.includes('veterinarian');
+    return userRoles.includes('Pet Groomer') || userRoles.includes('Veterinarian');
   });
 
   // Get available categories based on selected user's role
@@ -66,11 +78,11 @@ export default function Create({ users, categories }: CreateProps) {
 
     const userRoles = selectedUser.roles.map(role => role.name);
 
-    if (userRoles.includes('Pet_Groomer')) {
-      return categories.filter(cat => cat.name.toLowerCase() === 'grooming');
-    } else if (userRoles.includes('veterinarian')) {
+    if (userRoles.includes('Pet Groomer')) {
+      return categories.filter(cat => cat.name === 'Grooming');
+    } else if (userRoles.includes('Veterinarian')) {
       return categories.filter(cat => 
-        cat.name.toLowerCase() === 'treatment' || cat.name.toLowerCase() === 'check-up'
+        cat.name === 'Treatment' || cat.name === 'Check-up'
       );
     }
     
@@ -79,14 +91,66 @@ export default function Create({ users, categories }: CreateProps) {
 
   const availableCategories = getAvailableCategories();
 
+  // Validate if selected user can be assigned to the current service category
+  const validateUserCategoryAssignment = () => {
+    if (!data.user_id || !service.category_id) return true;
+
+    const selectedUser = users.find(user => user.id === parseInt(data.user_id));
+    const currentCategory = categories.find(cat => cat.id === service.category_id);
+
+    if (!selectedUser || !currentCategory) return true;
+
+    const userRoles = selectedUser.roles.map(role => role.name);
+
+    // Check if user's role matches the service category
+    if (userRoles.includes('Pet Groomer') && currentCategory.name !== 'Grooming') {
+      return false;
+    }
+
+    if (userRoles.includes('Veterinarian') && 
+        !['Treatment', 'Check-up'].includes(currentCategory.name)) {
+      return false;
+    }
+
+    return true;
+  };
+
+  // Reset validation error when user changes
+  useEffect(() => {
+    setValidationError('');
+  }, [data.user_id]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate user-category assignment
+    if (!validateUserCategoryAssignment()) {
+      const selectedUser = users.find(user => user.id === parseInt(data.user_id));
+      const currentCategory = categories.find(cat => cat.id === service.category_id);
+      
+      setValidationError(
+        `${selectedUser?.first_name} ${selectedUser?.last_name} (${selectedUser?.roles.map(r => r.name).join(', ')}) cannot be assigned to ${currentCategory?.name} services.`
+      );
+      return;
+    }
+
+    setValidationError('');
+    put(route('services.update', service.id));
+  };
+
   // Helper to get user's role names as string
   const getUserRoles = (user: User) => {
     return user.roles.map(role => role.name).join(', ');
   };
 
+  // Get current service provider
+  const currentServiceProvider = users.find(user => user.id === service.user_id);
+  // Get current category
+  const currentCategory = categories.find(cat => cat.id === service.category_id);
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Create Service" />
+      <Head title={`Edit Service - ${service.name}`} />
 
       <motion.div
         className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
@@ -108,11 +172,19 @@ export default function Create({ users, categories }: CreateProps) {
               transition={{ delay: 0.1 }}
             >
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                Create New Service
+                Edit Service
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Define service details and assign to appropriate staff
+                Update service details and staff assignment
               </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
+                  ID: #{service.id}
+                </span>
+                <span className="text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-2 py-1 rounded-full">
+                  {currentCategory?.name || 'No Category'}
+                </span>
+              </div>
             </motion.div>
 
             <Link href={route('services.index')}>
@@ -141,16 +213,14 @@ export default function Create({ users, categories }: CreateProps) {
                 <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 font-medium">
                   Service Name
                 </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="e.g., Basic Grooming, Vaccination"
-                  required
-                  value={data.name}
-                  onChange={(e) => setData('name', e.target.value)}
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <InputError message={errors.name} className="mt-1" />
+                <div className="mt-2">
+                  <div className="h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 flex items-center">
+                    {service.name}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                    Service name cannot be changed
+                  </p>
+                </div>
               </motion.div>
 
               <motion.div
@@ -207,27 +277,14 @@ export default function Create({ users, categories }: CreateProps) {
                 <Label htmlFor="category_id" className="text-gray-700 dark:text-gray-300 font-medium">
                   Category
                 </Label>
-                <select
-                  id="category_id"
-                  required
-                  value={data.category_id}
-                  onChange={(e) => setData('category_id', e.target.value)}
-                  className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
-                  disabled={availableCategories.length === 0}
-                >
-                  <option value="">Select Category</option>
-                  {availableCategories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {availableCategories.length === 0 && data.user_id && (
-                  <p className="text-sm text-red-500 mt-1">
-                    No available categories for the selected service provider
+                <div className="mt-2">
+                  <div className="h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 flex items-center">
+                    {currentCategory?.name || 'No Category'}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                    Category cannot be changed
                   </p>
-                )}
-                <InputError message={errors.category_id} className="mt-1" />
+                </div>
               </motion.div>
             </div>
 
@@ -244,11 +301,7 @@ export default function Create({ users, categories }: CreateProps) {
                 id="user_id"
                 required
                 value={data.user_id}
-                onChange={(e) => {
-                  setData('user_id', e.target.value);
-                  // Reset category when user changes
-                  setData('category_id', '');
-                }}
+                onChange={(e) => setData('user_id', e.target.value)}
                 className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
               >
                 <option value="">Select Service Provider</option>
@@ -258,6 +311,12 @@ export default function Create({ users, categories }: CreateProps) {
                   </option>
                 ))}
               </select>
+              {currentServiceProvider && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Current: {currentServiceProvider.first_name} {currentServiceProvider.last_name} 
+                  {currentServiceProvider.roles.length > 0 && ` (${getUserRoles(currentServiceProvider)})`}
+                </p>
+              )}
               {filteredUsers.length === 0 && (
                 <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
                   No pet groomers or veterinarians available for service assignment
@@ -286,6 +345,25 @@ export default function Create({ users, categories }: CreateProps) {
               <InputError message={errors.description} className="mt-1" />
             </motion.div>
 
+            {/* Validation Error */}
+            {validationError && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+              >
+                <div className="flex items-center gap-2 text-red-800 dark:text-red-300">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">Assignment Error</span>
+                </div>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                  {validationError}
+                </p>
+              </motion.div>
+            )}
+
             {/* Role-based restrictions info */}
             {data.user_id && (
               <motion.div
@@ -300,21 +378,35 @@ export default function Create({ users, categories }: CreateProps) {
                 <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                   <li>• <strong>Pet Groomers</strong> can only be assigned to <strong>Grooming</strong> services</li>
                   <li>• <strong>Veterinarians</strong> can only be assigned to <strong>Treatment</strong> and <strong>Check-up</strong> services</li>
+                  {currentCategory && (
+                    <li className="font-semibold mt-2">
+                      Current service category: <span className="underline">{currentCategory.name}</span>
+                    </li>
+                  )}
                 </ul>
               </motion.div>
             )}
 
             {/* Submit */}
             <motion.div
-              className="pt-6 flex justify-end"
+              className="pt-6 flex justify-end gap-3"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
+              <Link href={route('services.index')}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium transition hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </Button>
+              </Link>
               <Button
                 type="submit"
-                disabled={processing}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+                disabled={processing || !!validationError}
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
               >
                 {processing ? (
                   <>
@@ -322,10 +414,10 @@ export default function Create({ users, categories }: CreateProps) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    Creating...
+                    Updating...
                   </>
                 ) : (
-                  'Create Service'
+                  'Update Service'
                 )}
               </Button>
             </motion.div>

@@ -18,7 +18,7 @@ interface User {
   first_name: string;
   last_name: string;
   email: string;
-  roles: Role[]; // Roles come as an array of role objects
+  roles: Role[];
 }
 
 interface Category {
@@ -51,10 +51,10 @@ export default function Create({ users, categories }: CreateProps) {
     post(route('services.store'));
   };
 
-  // Filter users to only show pet_groomer and veterinarian roles
+  // Filter users to only show Pet Groomer and Veterinarian roles - CORRECT NAMES
   const filteredUsers = users.filter(user => {
     const userRoles = user.roles.map(role => role.name);
-    return userRoles.includes('pet_groomer') || userRoles.includes('veterinarian');
+    return userRoles.includes('Pet Groomer') || userRoles.includes('Veterinarian');
   });
 
   // Get available categories based on selected user's role
@@ -65,15 +65,23 @@ export default function Create({ users, categories }: CreateProps) {
     if (!selectedUser) return categories;
 
     const userRoles = selectedUser.roles.map(role => role.name);
+    
+    console.log('DEBUG - User Roles:', userRoles);
+    console.log('DEBUG - Selected User:', selectedUser.first_name, selectedUser.last_name);
 
-    if (userRoles.includes('Pet_Groomer')) {
-      return categories.filter(cat => cat.name.toLowerCase() === 'grooming');
-    } else if (userRoles.includes('veterinarian')) {
-      return categories.filter(cat => 
-        cat.name.toLowerCase() === 'treatment' || cat.name.toLowerCase() === 'check-up'
+    if (userRoles.includes('Pet Groomer')) {
+      const result = categories.filter(cat => cat.name === 'Grooming');
+      console.log('DEBUG - Pet Groomer categories:', result);
+      return result;
+    } else if (userRoles.includes('Veterinarian')) {
+      const result = categories.filter(cat => 
+        cat.name === 'Treatment' || cat.name === 'Check-up'
       );
+      console.log('DEBUG - Veterinarian categories:', result);
+      return result;
     }
     
+    console.log('DEBUG - No specific role, returning all categories');
     return categories;
   };
 

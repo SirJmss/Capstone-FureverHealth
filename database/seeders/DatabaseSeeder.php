@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RolePermissionSeeder::class,
+            ServicesSeeder::class,
+            
         ]);
 
         $admin = User::firstOrCreate(
@@ -38,8 +40,28 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $veterinarian = User::firstOrCreate(
+            ['email' => 'veterinarian@example.com'],
+            [
+                'first_name' => 'veterinarian',
+                'last_name' => 'user',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $pet_groomer = User::firstOrCreate(
+            ['email' => 'petgroomer@example.com'],
+            [
+                'first_name' => 'pet',
+                'last_name' => 'groomer',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
         $customer = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'customer@example.com'],
             [
                 'first_name' => 'customer',
                 'last_name' => 'User',
@@ -54,6 +76,14 @@ class DatabaseSeeder extends Seeder
 
         if (!$staff->hasRole('Staff')) {
             $staff->assignRole('Staff');
+        }
+
+        if (!$pet_groomer->hasRole('Pet Groomer')) {
+            $pet_groomer->assignRole('Pet Groomer');
+        }
+
+        if (!$veterinarian->hasRole('Veterinarian')) {
+            $veterinarian->assignRole('Veterinarian');
         }
 
         if (!$customer->hasRole('Customer')) {

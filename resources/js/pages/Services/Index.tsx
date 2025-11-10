@@ -3,47 +3,96 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { can } from '@/lib/can';
 
-type Role = {
+type Service = {
   id: number;
+  user_id: number;
   name: string;
-  permissions: string[];
+  description: string;
+  price: number;
+  duration: number;
+  category_id: number;
+  user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  category?: {
+    id: number;
+    name: string;
+  };
 };
 
 type Props = {
-  roles: Role[];
+  services: Service[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Services', href: '/services' }];
 
-export default function Index({ roles }: Props) {
+export default function Index({ services }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
 
-  const openDeleteModal = (role: Role) => {
-    setRoleToDelete(role);
+  // Search and sort state
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
+  const openDeleteModal = (service: Service) => {
+    setServiceToDelete(service);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setRoleToDelete(null);
+    setServiceToDelete(null);
     setDeletingId(null);
   };
 
   const confirmDelete = () => {
-    if (!roleToDelete) return;
-    setDeletingId(roleToDelete.id);
-    router.delete(route('roles.destroy', roleToDelete.id), {
+    if (!serviceToDelete) return;
+    setDeletingId(serviceToDelete.id);
+    router.delete(route('services.destroy', serviceToDelete.id), {
       preserveScroll: true,
       onSuccess: () => closeModal(),
       onError: () => {
-        alert('Failed to delete role.');
+        alert('Failed to delete service.');
         closeModal();
       },
     });
+  };
+
+  // Filter and sort logic
+  const filteredServices = useMemo(() => {
+    const term = search.toLowerCase();
+    const filtered = services.filter(
+      (service) =>
+        service.name.toLowerCase().includes(term) ||
+        service.description.toLowerCase().includes(term) ||
+        service.user?.first_name.toLowerCase().includes(term) ||
+        service.user?.last_name.toLowerCase().includes(term) ||
+        service.category?.name.toLowerCase().includes(term)
+    );
+    return sortOrder === "desc"
+      ? [...filtered].sort((a, b) => b.id - a.id)
+      : [...filtered].sort((a, b) => a.id - b.id);
+  }, [services, search, sortOrder]);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP'
+    }).format(price);
+  };
+
+  const formatDuration = (duration: number) => {
+    if (duration < 60) return `${duration} min`;
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   };
 
   return (
@@ -69,10 +118,10 @@ export default function Index({ roles }: Props) {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                Delete Role
+                Delete Service
               </h3>
               <p className="mb-6 text-gray-600 dark:text-gray-300">
-                Permanently delete <span className="font-semibold text-red-600">"{roleToDelete?.name}"</span>? This action{' '}
+                Permanently delete <span className="font-semibold text-red-600">"{serviceToDelete?.name}"</span>? This action{' '}
                 <span className="underline">cannot be undone</span>.
               </p>
 
@@ -89,7 +138,7 @@ export default function Index({ roles }: Props) {
                   disabled={deletingId !== null}
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-sm shadow-lg transition hover:from-red-600 hover:to-red-700 disabled:opacity-50"
                 >
-                  {deletingId ? 'Deleting...' : 'Delete Role'}
+                  {deletingId ? 'Deleting...' : 'Delete Service'}
                 </button>
               </div>
             </motion.div>
@@ -112,21 +161,41 @@ export default function Index({ roles }: Props) {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            Roles Management
+            Services Management
           </motion.h1>
 
-          <Link href={route('roles.create')}>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow-lg transition-all hover:shadow-xl flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create Role
-            </motion.button>
-          </Link>
+          {can('services.create') && (
+            <Link href={route('services.create')}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow-lg transition-all hover:shadow-xl flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Service
+              </motion.button>
+            </Link>
+          )}
+        </div>
+
+        {/* Search + Sort Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search services..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-1/3 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+
+          <button
+            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+            className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600"
+          >
+            Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+          </button>
         </div>
 
         {/* Table Card */}
@@ -140,11 +209,10 @@ export default function Index({ roles }: Props) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  {['ID', 'Role Name', 'Permissions', 'Actions'].map((h, i) => (
+                  {['ID', 'Service Name', 'Description', 'Price', 'Duration', 'Service Provider', 'Category', 'Actions'].map((h) => (
                     <th
                       key={h}
                       className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
-                      style={{ animationDelay: `${i * 0.1}s` }}
                     >
                       {h}
                     </th>
@@ -152,21 +220,21 @@ export default function Index({ roles }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!roles?.length ? (
+                {!filteredServices.length ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-16 text-gray-500 dark:text-gray-400">
+                    <td colSpan={8} className="text-center py-16 text-gray-500 dark:text-gray-400">
                       <div className="flex flex-col items-center">
                         <svg className="w-16 h-16 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
-                        No roles found
+                        No services found
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  roles.map((role, index) => (
+                  filteredServices.map((service, index) => (
                     <motion.tr
-                      key={role.id}
+                      key={service.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -174,75 +242,109 @@ export default function Index({ roles }: Props) {
                     >
                       {/* ID */}
                       <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        #{role.id}
+                        #{service.id}
                       </td>
 
-                      {/* Name */}
+                      {/* Service Name */}
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {role.name}
+                          {service.name}
                         </span>
                       </td>
 
-                      {/* Permissions */}
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {role.permissions.length > 0 ? (
-                            role.permissions.map((perm) => (
-                              <span
-                                key={perm}
-                                className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 dark:from-purple-900 dark:to-purple-800 dark:text-purple-200"
-                              >
-                                {perm}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-xs italic text-gray-400">No permissions</span>
-                          )}
+                      {/* Description */}
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                        <div className="line-clamp-2">
+                          {service.description || 'No description'}
                         </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          {formatPrice(service.price)}
+                        </span>
+                      </td>
+
+                      {/* Duration */}
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {formatDuration(service.duration)}
+                      </td>
+
+                      {/* Service Provider */}
+                      <td className="px-6 py-4">
+                        {service.user ? (
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {service.user.first_name} {service.user.last_name}
+                            </span>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {service.user.email}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic">Not assigned</span>
+                        )}
+                      </td>
+
+                      {/* Category */}
+                      <td className="px-6 py-4">
+                        {service.category ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                            {service.category.name}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic">Uncategorized</span>
+                        )}
                       </td>
 
                       {/* Actions */}
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <Link href={route('roles.show', role.id)}>
+                          {can('services.view') && (
+                            <Link href={route('services.show', service.id)}>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                title="View"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </motion.button>
+                            </Link>
+                          )}
+
+                          {can('services.edit') && (
+                            <Link href={route('services.edit', service.id)}>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition"
+                                title="Edit"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </motion.button>
+                            </Link>
+                          )}
+
+                          {can('services.delete') && (
                             <motion.button
+                              onClick={() => openDeleteModal(service)}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
-                              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                              title="View"
+                              className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"
+                              title="Delete"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </motion.button>
-                          </Link>
-
-                          <Link href={route('roles.edit', role.id)}>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition"
-                              title="Edit"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </motion.button>
-                          </Link>
-
-                          <motion.button
-                            onClick={() => openDeleteModal(role)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"
-                            title="Delete"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </motion.button>
+                          )}
                         </div>
                       </td>
                     </motion.tr>

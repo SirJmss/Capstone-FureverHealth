@@ -37,6 +37,12 @@ class PermissionSeeder extends Seeder
             "pets.edit",
             "pets.delete",
 
+            // Services permissions
+            "services.view",
+            "services.create",
+            "services.edit",
+            "services.delete",
+
             // Access-level permissions
             "access.dashboard",
             "access.roles",

@@ -14,16 +14,18 @@ class AppointmentsController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin');
-        
-        $appointments = Appointment::with(['pet', 'user', 'service'])
-            ->when(!$isAdmin, function ($query) use ($user) {
-                // Regular users can only see their own appointments
-                return $query->where('user_id', $user->id);
-            })
-            ->latest()
-            ->get();
+        // Allow both Admin and Staff to view all appointments
+        if (Auth::user()->hasRole(['Admin', 'Staff','Veterinarian', 'Pet Groomer'])) {
+            $appointments = Appointment::with(['user', 'pet', 'service'])
+                ->latest()
+                ->get();
+        } else {
+            // Regular users can only see their own appointments
+            $appointments = Appointment::with(['user', 'pet', 'service'])
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->get();
+        }
 
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
@@ -33,7 +35,7 @@ class AppointmentsController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin');
+        $isAdmin = $user->hasRole('Admin', 'Staff');
         
         // Get pets based on user role - THIS IS THE KEY FIX
         if ($isAdmin) {
@@ -61,7 +63,7 @@ class AppointmentsController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasRole('admin');
+        $isAdmin = $user->hasRole('Admin');
         
         // If user is not admin, force the user_id to be the current user's ID
         if (!$isAdmin) {
@@ -96,21 +98,14 @@ class AppointmentsController extends Controller
     }
 
     public function show($id)
-    {
-        $appointment = Appointment::with(['pet', 'user', 'service'])->findOrFail($id);
-        $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin');
+{
+    $appointment = Appointment::with(['pet', 'user', 'service.user'])->findOrFail($id);
+    $user = auth()->user();
 
-        // Authorization check
-        if (!$isAdmin && $appointment->user_id !== $user->id) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        return Inertia::render('Appointments/Show', [
-            'appointment' => $appointment,
-        ]);
-    }
-
+    return Inertia::render('Appointments/Show', [
+        'appointment' => $appointment,
+    ]);
+}
     public function edit($id)
     {
         $appointment = Appointment::findOrFail($id);

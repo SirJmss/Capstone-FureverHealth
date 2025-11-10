@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pet;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -14,10 +15,21 @@ class PetController extends Controller
      */
     public function index()
     {
-        $pets = Pet::where('user_id', auth()->id())->latest()->get();
-        return Inertia::render('Pets/Index', [
-            'pets' => $pets
-        ]);
+    if (Auth::user()->hasRole(['Admin', 'Staff','Veterinarian', 'Pet Groomer'])) {
+        $pets = Pet::with(['user'])
+            ->latest()
+            ->get();
+    } else {
+        // Regular users can only see their own pets
+        $pets = Pet::with(['user'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get();
+    }
+
+    return Inertia::render('Pets/Index', [
+        'pets' => $pets,
+    ]);
     }
 
     /**

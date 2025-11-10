@@ -22,6 +22,8 @@ class RolePermissionSeeder extends Seeder
         // Create roles if they don't exist
         $admin = Role::firstOrCreate(['name' => 'Admin']);
         $staff = Role::firstOrCreate(['name' => 'Staff']);
+        $veterinarian = Role::firstOrCreate(['name' => 'Veterinarian']);
+        $pet_groomer = Role::firstOrCreate(['name' => 'Pet Groomer']);
         $customer = Role::firstOrCreate(['name' => 'Customer']);
 
         // Assign permissions to Admin (all permissions)
@@ -32,6 +34,7 @@ class RolePermissionSeeder extends Seeder
             'access.dashboard',
             'appointments.view',
             'appointments.create',
+            'appointments.edit',  
             'access.schedules',
             'access.appointments',
             'access.pets',
@@ -39,6 +42,33 @@ class RolePermissionSeeder extends Seeder
             'pets.create',
             'pets.edit',
             'pets.delete',
+            'services.view',
+            'services.edit',
+            'services.create',
+        ]);
+
+        $pet_groomer->syncPermissions([
+            'access.dashboard',
+            'appointments.view',
+            'appointments.edit',  
+            'access.schedules',
+            'access.appointments',
+            'access.pets',
+            'pets.view',
+            'pets.edit',
+
+        ]);
+
+        $veterinarian->syncPermissions([
+            'access.dashboard',
+            'appointments.view',
+            'appointments.edit',  
+            'access.schedules',
+            'access.appointments',
+            'access.pets',
+            'pets.view',
+            'pets.edit',
+
         ]);
 
         $customer->syncPermissions([
@@ -52,7 +82,6 @@ class RolePermissionSeeder extends Seeder
             'pets.view',
             'pets.create',
             'pets.edit',
-            'pets.delete',
         ]);
 
         $this->command->info('Roles and permissions successfully seeded!');
