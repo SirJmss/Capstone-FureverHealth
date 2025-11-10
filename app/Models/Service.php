@@ -10,28 +10,23 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'name',
-        'description',
-        'price',
-        'duration',
-        'category_id',
+        'name', 'description', 'price', 'duration', 'user_id', 'category_id',
     ];
+
+    /**
+     * PRICE IS NOW A NUMBER → NO MORE .toFixed() ERROR
+     */
+    protected $casts = [
+        'price' => 'float',   // or 'decimal:2'
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
-    }
-
-    // Add this relationship
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // Optional: If you have appointments
-    public function appointments()
-    {
-        return $this->hasMany(Appointment::class);
+        return $this->belongsTo(\App\Models\Category::class);
     }
 }

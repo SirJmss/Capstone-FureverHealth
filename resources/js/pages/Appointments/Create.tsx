@@ -8,327 +8,223 @@ import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
 
-interface Role {
-  id: number;
-  name: string;
-}
-
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  roles: Role[]; // Roles come as an array of role objects
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
+type User = { id: number; first_name: string; last_name: string };
+type Pet = { id: number; name: string; user_id: number };
+type Service = { id: number; name: string; price: number };
 
 interface CreateProps {
-  users: User[];
-  categories: Category[];
+  users?: User[];
+  pets: Pet[];
+  services: Service[];
+  is_admin: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Services', href: '/services' },
-  { title: 'Create Service', href: '/services/create' },
+  { title: 'Appointments', href: '/appointments' },
+  { title: 'Create Appointment', href: '/appointments/create' },
 ];
 
-export default function Create({ users, categories }: CreateProps) {
+export default function Create({ users = [], pets, services, is_admin }: CreateProps) {
   const { data, setData, post, processing, errors } = useForm({
-    name: '',
-    description: '',
-    price: '',
-    duration: '',
     user_id: '',
-    category_id: '',
+    pet_id: '',
+    service_id: '',
+    appointment_date: '',
+    status: 'pending',
+    payment_status: 'unpaid',
+    notes: '',
+    staff_remarks: '',
   });
+
+  // Non-admin: auto-fill user_id from first pet
+  const currentUserId = !is_admin && pets.length > 0 ? pets[0].user_id.toString() : '';
+  const filteredPets = is_admin && data.user_id
+    ? pets.filter(p => p.user_id === Number(data.user_id))
+    : pets;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post(route('services.store'));
-  };
 
-  // Filter users to only show pet_groomer and veterinarian roles
-  const filteredUsers = users.filter(user => {
-    const userRoles = user.roles.map(role => role.name);
-    return userRoles.includes('pet_groomer') || userRoles.includes('veterinarian');
-  });
-
-  // Get available categories based on selected user's role
-  const getAvailableCategories = () => {
-    if (!data.user_id) return categories;
-    
-    const selectedUser = users.find(user => user.id === parseInt(data.user_id));
-    if (!selectedUser) return categories;
-
-    const userRoles = selectedUser.roles.map(role => role.name);
-
-    if (userRoles.includes('Pet_Groomer')) {
-      return categories.filter(cat => cat.name.toLowerCase() === 'grooming');
-    } else if (userRoles.includes('veterinarian')) {
-      return categories.filter(cat => 
-        cat.name.toLowerCase() === 'treatment' || cat.name.toLowerCase() === 'check-up'
-      );
+    if (!is_admin && currentUserId) {
+      setData('user_id', currentUserId);
     }
-    
-    return categories;
-  };
 
-  const availableCategories = getAvailableCategories();
-
-  // Helper to get user's role names as string
-  const getUserRoles = (user: User) => {
-    return user.roles.map(role => role.name).join(', ');
+    post(route('appointments.store'));
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Create Service" />
+      <Head title="Create Appointment" />
 
-      <motion.div
-        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <motion.div className="p-6 flex items-center justify-center min-h-[80vh]">
         <motion.div
-          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
+          className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          transition={{ type: 'spring', stiffness: 300 }}
         >
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                Create New Service
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Create Appointment
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Define service details and assign to appropriate staff
-              </p>
-            </motion.div>
-
-            <Link href={route('services.index')}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Services
-              </motion.div>
+              <p className="text-gray-600 dark:text-gray-400">Schedule a pet service</p>
+            </div>
+            <Link href={route('appointments.index')}>
+              <Button variant="outline">Back</Button>
             </Link>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Service Name & Price Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Service Name
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="e.g., Basic Grooming, Vaccination"
-                  required
-                  value={data.name}
-                  onChange={(e) => setData('name', e.target.value)}
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <InputError message={errors.name} className="mt-1" />
-              </motion.div>
-
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="price" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Price (₱)
-                </Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  required
-                  value={data.price}
-                  onChange={(e) => setData('price', e.target.value)}
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <InputError message={errors.price} className="mt-1" />
-              </motion.div>
-            </div>
-
-            {/* Duration & Category Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                <Label htmlFor="duration" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Duration (minutes)
-                </Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min="0"
-                  placeholder="e.g., 60"
-                  required
-                  value={data.duration}
-                  onChange={(e) => setData('duration', e.target.value)}
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <InputError message={errors.duration} className="mt-1" />
-              </motion.div>
-
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                <Label htmlFor="category_id" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Category
-                </Label>
+            {/* ADMIN: Select Customer */}
+            {is_admin && (
+              <div>
+                <Label htmlFor="user_id">Customer *</Label>
                 <select
-                  id="category_id"
+                  id="user_id"
+                  value={data.user_id}
+                  onChange={(e) => setData({ ...data, user_id: e.target.value, pet_id: '' })}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
                   required
-                  value={data.category_id}
-                  onChange={(e) => setData('category_id', e.target.value)}
-                  className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
-                  disabled={availableCategories.length === 0}
                 >
-                  <option value="">Select Category</option>
-                  {availableCategories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
+                  <option value="">Select Customer</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.first_name} {u.last_name}
                     </option>
                   ))}
                 </select>
-                {availableCategories.length === 0 && data.user_id && (
-                  <p className="text-sm text-red-500 mt-1">
-                    No available categories for the selected service provider
-                  </p>
-                )}
-                <InputError message={errors.category_id} className="mt-1" />
-              </motion.div>
-            </div>
-
-            {/* Service Provider */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Label htmlFor="user_id" className="text-gray-700 dark:text-gray-300 font-medium">
-                Service Provider
-              </Label>
-              <select
-                id="user_id"
-                required
-                value={data.user_id}
-                onChange={(e) => {
-                  setData('user_id', e.target.value);
-                  // Reset category when user changes
-                  setData('category_id', '');
-                }}
-                className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
-              >
-                <option value="">Select Service Provider</option>
-                {filteredUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name} - {getUserRoles(user)} - {user.email}
-                  </option>
-                ))}
-              </select>
-              {filteredUsers.length === 0 && (
-                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
-                  No pet groomers or veterinarians available for service assignment
-                </p>
-              )}
-              <InputError message={errors.user_id} className="mt-1" />
-            </motion.div>
-
-            {/* Description */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.35 }}
-            >
-              <Label htmlFor="description" className="text-gray-700 dark:text-gray-300 font-medium">
-                Description
-              </Label>
-              <textarea
-                id="description"
-                placeholder="Describe the service in detail..."
-                value={data.description}
-                onChange={(e) => setData('description', e.target.value)}
-                className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                rows={3}
-              />
-              <InputError message={errors.description} className="mt-1" />
-            </motion.div>
-
-            {/* Role-based restrictions info */}
-            {data.user_id && (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-              >
-                <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">
-                  Service Restrictions:
-                </h4>
-                <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                  <li>• <strong>Pet Groomers</strong> can only be assigned to <strong>Grooming</strong> services</li>
-                  <li>• <strong>Veterinarians</strong> can only be assigned to <strong>Treatment</strong> and <strong>Check-up</strong> services</li>
-                </ul>
-              </motion.div>
+                <InputError message={errors.user_id} className="mt-1" />
+              </div>
             )}
 
+            {/* Pet & Service */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="pet_id">Pet *</Label>
+                <select
+                  id="pet_id"
+                  value={data.pet_id}
+                  onChange={(e) => setData('pet_id', e.target.value)}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  required
+                  disabled={is_admin && !data.user_id}
+                >
+                  <option value="">
+                    {is_admin
+                      ? data.user_id ? 'Select Pet' : 'Select Customer First'
+                      : 'Select Pet'}
+                  </option>
+                  {filteredPets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <InputError message={errors.pet_id} className="mt-1" />
+              </div>
+
+              <div>
+                <Label htmlFor="service_id">Service *</Label>
+                <select
+                  id="service_id"
+                  value={data.service_id}
+                  onChange={(e) => setData('service_id', e.target.value)}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  required
+                >
+                  <option value="">Select Service</option>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} - ₱{s.price.toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+                <InputError message={errors.service_id} className="mt-1" />
+              </div>
+            </div>
+
+            {/* Date & Time */}
+            <div>
+              <Label htmlFor="appointment_date">Date & Time *</Label>
+              <Input
+                id="appointment_date"
+                type="datetime-local"
+                value={data.appointment_date}
+                onChange={(e) => setData('appointment_date', e.target.value)}
+                className="mt-2 h-12"
+                required
+              />
+              <InputError message={errors.appointment_date} className="mt-1" />
+            </div>
+
+            {/* Status & Payment */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  value={data.status}
+                  onChange={(e) => setData('status', e.target.value)}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="payment_status">Payment Status</Label>
+                <select
+                  id="payment_status"
+                  value={data.payment_status}
+                  onChange={(e) => setData('payment_status', e.target.value)}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                >
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Staff Remarks (Admin Only) */}
+            {is_admin && (
+              <div>
+                <Label htmlFor="staff_remarks">Staff Remarks</Label>
+                <Input
+                  id="staff_remarks"
+                  type="text"
+                  value={data.staff_remarks}
+                  onChange={(e) => setData('staff_remarks', e.target.value)}
+                  placeholder="Internal notes..."
+                  className="mt-2 h-12"
+                />
+              </div>
+            )}
+
+            {/* Notes */}
+            <div>
+              <Label htmlFor="notes">Customer Notes (Optional)</Label>
+              <textarea
+                id="notes"
+                value={data.notes}
+                onChange={(e) => setData('notes', e.target.value)}
+                placeholder="Any special requests..."
+                className="w-full h-24 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-3 resize-none text-gray-900 dark:text-white"
+              />
+            </div>
+
             {/* Submit */}
-            <motion.div
-              className="pt-6 flex justify-end"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
+            <div className="flex justify-end">
               <Button
                 type="submit"
                 disabled={processing}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
               >
-                {processing ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Creating...
-                  </>
-                ) : (
-                  'Create Service'
-                )}
+                {processing ? 'Creating...' : 'Create Appointment'}
               </Button>
-            </motion.div>
+            </div>
           </form>
         </motion.div>
       </motion.div>

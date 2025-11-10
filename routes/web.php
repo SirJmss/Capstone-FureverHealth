@@ -31,10 +31,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('pets', PetController::class);
     Route::resource('services', ServiceController::class);
 
-    Route::resource("users", UserController::class)
-    ->only(["create","store"])->middleware("permission:users.create");
-    Route::resource("users", UserController::class)
-    ->only(["create","store"])->middleware("permission:users.edit");
+Route::resource('users', UserController::class)->middleware([
+    'create,store' => 'permission:users.create',
+    'edit,update'  => 'permission:users.edit',
+    'destroy'     => 'permission:users.delete',
+]);
 
     
 });
