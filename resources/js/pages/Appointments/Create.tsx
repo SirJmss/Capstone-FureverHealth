@@ -76,7 +76,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* ADMIN: Select Customer */}
+            {/* ADMIN: Select Customer - HIDDEN FOR CUSTOMERS */}
             {is_admin && (
               <div>
                 <Label htmlFor="user_id">Customer *</Label>
@@ -113,12 +113,17 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
                   <option value="">
                     {is_admin
                       ? data.user_id ? 'Select Pet' : 'Select Customer First'
-                      : 'Select Pet'}
+                      : pets.length === 0 ? 'No pets available' : 'Select Pet'}
                   </option>
                   {filteredPets.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {!is_admin && pets.length === 0 && (
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                    You need to add a pet before creating an appointment.
+                  </p>
+                )}
                 <InputError message={errors.pet_id} className="mt-1" />
               </div>
 
@@ -142,7 +147,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               </div>
             </div>
 
-            {/* Date & Time */}
+            {/* Date & Time - VISIBLE TO ALL */}
             <div>
               <Label htmlFor="appointment_date">Date & Time *</Label>
               <Input
@@ -156,39 +161,41 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               <InputError message={errors.appointment_date} className="mt-1" />
             </div>
 
-            {/* Status & Payment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  value={data.status}
-                  onChange={(e) => setData('status', e.target.value)}
-                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
+            {/* Status & Payment - HIDDEN FOR CUSTOMERS */}
+            {is_admin && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <select
+                    id="status"
+                    value={data.status}
+                    onChange={(e) => setData('status', e.target.value)}
+                    className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
 
-              <div>
-                <Label htmlFor="payment_status">Payment Status</Label>
-                <select
-                  id="payment_status"
-                  value={data.payment_status}
-                  onChange={(e) => setData('payment_status', e.target.value)}
-                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
-                >
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                  <option value="refunded">Refunded</option>
-                </select>
+                <div>
+                  <Label htmlFor="payment_status">Payment Status</Label>
+                  <select
+                    id="payment_status"
+                    value={data.payment_status}
+                    onChange={(e) => setData('payment_status', e.target.value)}
+                    className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  >
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                    <option value="refunded">Refunded</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Staff Remarks (Admin Only) */}
+            {/* Staff Remarks (Admin Only) - HIDDEN FOR CUSTOMERS */}
             {is_admin && (
               <div>
                 <Label htmlFor="staff_remarks">Staff Remarks</Label>
@@ -203,14 +210,16 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               </div>
             )}
 
-            {/* Notes */}
+            {/* Notes - VISIBLE TO ALL */}
             <div>
-              <Label htmlFor="notes">Customer Notes (Optional)</Label>
+              <Label htmlFor="notes">
+                {is_admin ? 'Customer Notes (Optional)' : 'Notes (Optional)'}
+              </Label>
               <textarea
                 id="notes"
                 value={data.notes}
                 onChange={(e) => setData('notes', e.target.value)}
-                placeholder="Any special requests..."
+                placeholder={is_admin ? "Customer's special requests..." : "Any special requests..."}
                 className="w-full h-24 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-3 resize-none text-gray-900 dark:text-white"
               />
             </div>
@@ -219,12 +228,15 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             <div className="flex justify-end">
               <Button
                 type="submit"
-                disabled={processing}
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
+                disabled={processing || (!is_admin && pets.length === 0)}
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50"
               >
                 {processing ? 'Creating...' : 'Create Appointment'}
               </Button>
             </div>
+
+            {/* Info message for customers */}
+            
           </form>
         </motion.div>
       </motion.div>

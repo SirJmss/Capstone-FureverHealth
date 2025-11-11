@@ -78,6 +78,13 @@ const mainNavItems: NavItem[] = [
     icon: ShieldCheck,
     permission: 'access.permissions',
   },
+  {
+    title: 'History',
+    href: '/history',
+    icon: Clock,
+     permission: 'access.history',
+    
+  },
 ];
 
 const footerNavItems: NavItem[] = [

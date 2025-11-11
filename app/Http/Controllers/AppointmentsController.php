@@ -33,32 +33,31 @@ class AppointmentsController extends Controller
     }
 
     public function create()
-    {
-        $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin', 'Staff');
-        
-        // Get pets based on user role - THIS IS THE KEY FIX
-        if ($isAdmin) {
-            // Admins can see all pets
-            $pets = Pet::select('id', 'name', 'user_id')->get();
-        } else {
-            // Regular users can only see their own pets
-            $pets = Pet::where('user_id', $user->id)->select('id', 'name', 'user_id')->get();
-        }
-        
-        $data = [
-            'pets' => $pets,
-            'services' => Service::select('id', 'name', 'price')->get(),
-            'is_admin' => $isAdmin,
-        ];
-        
-        // Only load users if the current user is admin
-        if ($isAdmin) {
-            $data['users'] = User::select('id', 'first_name', 'last_name')->get();
-        }
-
-        return Inertia::render('Appointments/Create', $data);
+{
+    $user = auth()->user();
+    
+    // Using hasAnyRole for multiple roles
+    $isAdminOrStaff = $user->hasAnyRole(['Admin', 'Staff']);
+    
+    // Get pets based on user role
+    if ($isAdminOrStaff) {
+        $pets = Pet::select('id', 'name', 'user_id')->get();
+    } else {
+        $pets = Pet::where('user_id', $user->id)->get();
     }
+    
+    $data = [
+        'pets' => $pets,
+        'services' => Service::select('id', 'name', 'price')->get(),
+        'is_admin' => $isAdminOrStaff, // This means user has Admin OR Staff role
+    ];
+    
+    if ($isAdminOrStaff) {
+        $data['users'] = User::select('id', 'first_name', 'last_name')->get();
+    }
+
+    return Inertia::render('Appointments/Create', $data);
+}
 
     public function store(Request $request)
     {

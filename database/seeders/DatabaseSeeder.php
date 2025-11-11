@@ -16,8 +16,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RolePermissionSeeder::class,
-            ServicesSeeder::class,
-            
         ]);
 
         $admin = User::firstOrCreate(
@@ -89,5 +87,8 @@ class DatabaseSeeder extends Seeder
         if (!$customer->hasRole('Customer')) {
             $customer->assignRole('Customer');
         }
+        $this->call([
+            ServicesSeeder::class,
+        ]);
     }
 }

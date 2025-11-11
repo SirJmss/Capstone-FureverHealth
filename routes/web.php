@@ -7,6 +7,8 @@ use App\Http\Controllers\PetController;
 use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +32,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('permissions', PermissionController::class);
     Route::resource('pets', PetController::class);
     Route::resource('services', ServiceController::class);
+    Route::resource('history',HistoryController::class);
+
+    Route::get('/appointments/{appointment}/receipt', [ReceiptController::class, 'generateReceipt'])
+        ->name('appointments.receipt');
+    Route::get('/appointments/{appointment}/receipt/view', [ReceiptController::class, 'viewReceipt'])
+        ->name('appointments.receipt.view');
+
 
 Route::resource('users', UserController::class)->middleware([
     'create,store' => 'permission:users.create',

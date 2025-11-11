@@ -151,18 +151,7 @@ export default function EditAppointment({
                     </option>
                   ))}
                 </select>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    type="button"
-                    onClick={() => setShowPetModal(true)}
-                    className="h-12 px-6 rounded-xl bg-gray-600 hover:bg-gray-700 text-white font-medium"
-                  >
-                    + Add Pet
-                  </Button>
-                </motion.div>
+               
               </div>
               <InputError message={errors.pet_id} className="mt-1" />
             </motion.div>

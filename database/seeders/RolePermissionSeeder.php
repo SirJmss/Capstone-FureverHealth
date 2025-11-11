@@ -45,6 +45,7 @@ class RolePermissionSeeder extends Seeder
             'services.view',
             'services.edit',
             'services.create',
+            'access.history',
         ]);
 
         $pet_groomer->syncPermissions([
@@ -56,6 +57,7 @@ class RolePermissionSeeder extends Seeder
             'access.pets',
             'pets.view',
             'pets.edit',
+            'access.history',
 
         ]);
 
@@ -68,6 +70,7 @@ class RolePermissionSeeder extends Seeder
             'access.pets',
             'pets.view',
             'pets.edit',
+            'access.history',
 
         ]);
 

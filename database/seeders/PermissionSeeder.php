@@ -51,7 +51,8 @@ class PermissionSeeder extends Seeder
             "access.schedules",
             "access.permissions",
             "access.pets",
-            "access.services"
+            "access.services",
+            "access.history",
         ];
 
         foreach ($permissions as $permission) {
