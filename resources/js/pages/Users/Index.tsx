@@ -15,6 +15,7 @@ type User = {
   phone: string;
   is_active: boolean;
   deleted_at: string | null;
+  roles: string[]; // Added roles property
 };
 
 type AuthUser = {
@@ -37,6 +38,14 @@ type Props = {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
+// Define role priority for sorting
+const ROLE_PRIORITY: { [key: string]: number } = {
+  'Admin': 1,
+  'Veterinarian': 2,
+  'Pet Groomer': 3,
+  'Customer': 4
+};
+
 export default function Index({ users, auth }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -44,6 +53,7 @@ export default function Index({ users, auth }: Props) {
 
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [roleSort, setRoleSort] = useState<string>("all"); // "all", "Admin", "Customer", etc.
 
   const openDeleteModal = (user: User) => {
     setUserToDelete(user);
@@ -69,19 +79,47 @@ export default function Index({ users, auth }: Props) {
     });
   };
 
+  // Get the highest priority role for a user (lowest number = highest priority)
+  const getPrimaryRole = (user: User): string => {
+    if (!user.roles || user.roles.length === 0) return 'Customer';
+    
+    const rolesWithPriority = user.roles
+      .map(role => ({ role, priority: ROLE_PRIORITY[role] || 999 }))
+      .sort((a, b) => a.priority - b.priority);
+    
+    return rolesWithPriority[0]?.role || 'Customer';
+  };
+
   // Fixed: Use filteredUsers instead of users in the table
   const filteredUsers = useMemo(() => {
     const term = search.toLowerCase();
-    const filtered = users.filter(
+    
+    // First filter by search term
+    let filtered = users.filter(
       (user) =>
         user.first_name.toLowerCase().includes(term) ||
         user.last_name.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term)
     );
-    return sortOrder === "desc"
-      ? [...filtered].sort((a, b) => b.id - a.id)
-      : [...filtered].sort((a, b) => a.id - b.id);
-  }, [users, search, sortOrder]);
+
+    // Then filter by role if a specific role is selected
+    if (roleSort !== "all") {
+      filtered = filtered.filter(user => 
+        user.roles && user.roles.includes(roleSort)
+      );
+    }
+
+    // Then sort by ID and role
+    return [...filtered].sort((a, b) => {
+      if (sortOrder === "desc") {
+        // For descending: newest first, then by role priority
+        return b.id - a.id || ROLE_PRIORITY[getPrimaryRole(a)] - ROLE_PRIORITY[getPrimaryRole(b)];
+      } else {
+        // For ascending: oldest first, then by role priority
+        return a.id - b.id || ROLE_PRIORITY[getPrimaryRole(a)] - ROLE_PRIORITY[getPrimaryRole(b)];
+      }
+    });
+  }, [users, search, sortOrder, roleSort]);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -181,12 +219,26 @@ export default function Index({ users, auth }: Props) {
             className="w-full sm:w-1/3 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
 
-          <button
-            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
-          </button>
+          <div className="flex gap-2">
+            <select
+              value={roleSort}
+              onChange={(e) => setRoleSort(e.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            >
+              <option value="all">All Roles</option>
+              <option value="Admin">Admin</option>
+              <option value="Veterinarian">Veterinarian</option>
+              <option value="Pet Groomer">Pet Groomer</option>
+              <option value="Customer">Customer</option>
+            </select>
+
+            <button
+              onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+              className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600"
+            >
+              Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+            </button>
+          </div>
         </div>
         
         {/* Table Card */}
@@ -200,7 +252,7 @@ export default function Index({ users, auth }: Props) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  {['ID', 'First Name', 'Last Name', 'Email', 'Address', 'Phone', 'Status', 'Actions'].map((h, i) => (
+                  {['ID', 'First Name', 'Last Name', 'Email', 'Roles', 'Status', 'Actions'].map((h, i) => (
                     <th
                       key={h}
                       className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
@@ -213,7 +265,7 @@ export default function Index({ users, auth }: Props) {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {!filteredUsers.length ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-16 text-gray-500 dark:text-gray-400">
+                    <td colSpan={7} className="text-center py-16 text-gray-500 dark:text-gray-400">
                       <div className="flex flex-col items-center">
                         <svg className="w-16 h-16 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 01-2 2H5a2 2 0 01-2-2 2 2 0 012-2h14a2 2 0 012 2z" />
@@ -232,46 +284,58 @@ export default function Index({ users, auth }: Props) {
                       className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
                     >
                       {/* ID */}
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white align-middle">
                         #{user.id}
                       </td>
 
                       {/* First Name */}
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-blue-800 ">
+                      <td className="px-6 py-4 align-middle">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.first_name}
                         </span>
                       </td>
 
                       {/* Last Name */}
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-blue-800 ">
+                      <td className="px-6 py-4 align-middle">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.last_name}
                         </span>
                       </td>
 
                       {/* Email */}
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">
                         {user.email}
                       </td>
 
-                      {/* Address */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                        {user.address || '—'}
-                      </td>
-
-                      {/* Phone */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                        {user.phone || '—'}
+                      {/* Roles */}
+                      <td className="px-6 py-4 align-middle">
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles && user.roles.map((role, idx) => (
+                            <span
+                              key={idx}
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                role === 'Admin' 
+                                  ? 'text-purple-600 dark:text-purple-400'
+                                  : role === 'Veterinarian'
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : role === 'Pet Groomer'
+                                  ? 'text-yellow-600 dark:text-yellow-400'
+                                  : 'text-blue-600 dark:text-blue-400'
+                              }`}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                        </div>
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-4 align-middle">
                         <motion.span
-                          className={`${
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
                             user.is_active
-                              ? 'inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-emerald-800'
-                              : 'inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-emerald-800'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-red-600 dark:text-red-400'
                           }`}
                           initial={{ scale: 0.8 }}
                           animate={{ scale: 1 }}
@@ -282,8 +346,8 @@ export default function Index({ users, auth }: Props) {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="px-6 py-4 align-middle">
+                        <div className="flex items-center justify-start gap-2">
                           {can('users.view') && (
                             <Link href={route('users.show', user.id)}>
                               <motion.button

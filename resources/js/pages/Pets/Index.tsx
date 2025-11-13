@@ -169,7 +169,7 @@ export default function Index({ pets }: Props) {
 
           <motion.button
             onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="h-12 px-5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
+            className="h-12 px-5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 10 }}
@@ -193,15 +193,31 @@ export default function Index({ pets }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  {['ID', 'Name', 'Species', 'Breed', 'Gender', 'Age', 'Status', 'Actions'].map((h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Species
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Breed
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Gender
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Age
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -225,59 +241,69 @@ export default function Index({ pets }: Props) {
                       initial={{ opacity: 0, x: -30 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.35 + index * 0.03 }}
-                      className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
+                      className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-all duration-200"
                     >
                       {/* ID */}
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">#{pet.id}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white align-middle">
+                        #{pet.id}
+                      </td>
 
                       {/* Name */}
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      <td className="px-6 py-4 align-middle">
+                        <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">
                           {pet.name}
                         </span>
                       </td>
 
                       {/* Species */}
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                      <td className="px-6 py-4 align-middle">
+                        <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">
                           {pet.species}
                         </span>
                       </td>
 
                       {/* Breed */}
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{pet.breed || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">
+                        {pet.breed || '—'}
+                      </td>
 
                       {/* Gender */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{pet.gender}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 align-middle">
+                        {pet.gender}
+                      </td>
 
                       {/* Age */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{pet.age}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 align-middle">
+                        {pet.age}
+                      </td>
 
                       {/* Status */}
-                      <td className="px-6 py-4 text-center">
-                        <motion.span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all ${
-                            !pet.deleted_at
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                              : 'bg-gradient-to-r from-red-500 to-rose-600 text-white'
-                          }`}
-                          initial={{ scale: 0.8 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.1 + index * 0.03 }}
-                        >
-                          {!pet.deleted_at ? 'Active' : 'Deleted'}
-                        </motion.span>
+                      <td className="px-6 py-4 align-middle">
+                        <div className="flex justify-center">
+                          <motion.span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+                              !pet.deleted_at
+                                ? 'text-green-700 dark:text-green-300'
+                                : 'text-red-700 dark:text-red-300'
+                            }`}
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1 + index * 0.03 }}
+                          >
+                            {!pet.deleted_at ? 'Active' : 'Deleted'}
+                          </motion.span>
+                        </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 align-middle">
                         <div className="flex items-center justify-center gap-2">
                           {can('pets.view') && (
                             <Link href={route('pets.show', pet.id)}>
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                                 title="View"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,7 +319,7 @@ export default function Index({ pets }: Props) {
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition"
+                                className="p-2 rounded-lg border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition"
                                 title="Edit"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,7 +334,7 @@ export default function Index({ pets }: Props) {
                               onClick={() => openDeleteModal(pet)}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
-                              className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"
+                              className="p-2 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
                               title="Delete"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

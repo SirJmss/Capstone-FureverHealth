@@ -179,7 +179,7 @@ export default function Index({ roles }: Props) {
 
                       {/* Name */}
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-blue-600 dark:text-blue-400">
                           {role.name}
                         </span>
                       </td>
@@ -191,7 +191,7 @@ export default function Index({ roles }: Props) {
                             role.permissions.map((perm) => (
                               <span
                                 key={perm}
-                                className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 dark:from-purple-900 dark:to-purple-800 dark:text-purple-200"
+                                className="px-3 py-1.5 rounded-full text-xs font-medium text-purple-600 dark:text-purple-400"
                               >
                                 {perm}
                               </span>

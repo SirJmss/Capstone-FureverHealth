@@ -74,20 +74,20 @@ export default function Index({ appointments }: Props) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "confirmed": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "completed": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "cancelled": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "pending": return "text-yellow-600 dark:text-yellow-400";
+      case "confirmed": return "text-blue-600 dark:text-blue-400";
+      case "completed": return "text-green-600 dark:text-green-400";
+      case "cancelled": return "text-red-600 dark:text-red-400";
+      default: return "text-gray-600 dark:text-gray-400";
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case "paid": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "unpaid": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "refunded": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "paid": return "text-green-600 dark:text-green-400";
+      case "unpaid": return "text-red-600 dark:text-red-400";
+      case "refunded": return "text-purple-600 dark:text-purple-400";
+      default: return "text-gray-600 dark:text-gray-400";
     }
   };
 
@@ -232,14 +232,30 @@ export default function Index({ appointments }: Props) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  {["ID", "Customer", "Pet", "Service", "Date & Time", "Status", "Payment", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Pet
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Payment
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -259,29 +275,33 @@ export default function Index({ appointments }: Props) {
                       transition={{ delay: 0.35 + index * 0.03 }}
                       className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
                     >
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">#{appointment.id}</td>
-                      <td className="px-6 py-4 text-gray-800 dark:text-gray-200">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white align-middle">
+                        #{appointment.id}
+                      </td>
+                      <td className="px-6 py-4 text-gray-800 dark:text-gray-200 align-middle">
                         {appointment.user.first_name} {appointment.user.last_name}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-blue-700 dark:text-blue-300">
+                      <td className="px-6 py-4 font-semibold text-blue-700 dark:text-blue-300 align-middle">
                         {appointment.pet.name}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 align-middle">
                         <div>{appointment.service.name}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">${appointment.service.price}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm">{formatDate(appointment.appointment_date)}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-sm align-middle">
+                        {formatDate(appointment.appointment_date)}
+                      </td>
+                      <td className="px-6 py-4 align-middle">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(appointment.status)}`}>
                           {appointment.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 align-middle">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(appointment.payment_status)}`}>
                           {appointment.payment_status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 align-middle">
                         <div className="flex items-center justify-center gap-2">
                           {can("appointments.view") && (
                             <Link href={route("appointments.show", appointment.id)}>

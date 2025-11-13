@@ -172,7 +172,7 @@ export default function Index({ permissions }: Props) {
 
                       {/* Name */}
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-800 dark:from-indigo-900 dark:to-indigo-800 dark:text-indigo-200">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-indigo-800 dark:from-indigo-900 dark:to-indigo-800 dark:text-indigo-200">
                           {p.name}
                         </span>
                       </td>

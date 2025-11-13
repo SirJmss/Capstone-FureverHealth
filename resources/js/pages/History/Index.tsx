@@ -110,8 +110,6 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                         </div>
                     </motion.div>
 
-                    
-
                     {/* Appointments Table */}
                     <motion.div
                         className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
@@ -206,10 +204,10 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                         appointment.payment_status === 'paid' 
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                            ? 'text-green-700 dark:text-green-300'
                                                             : appointment.payment_status === 'unpaid'
-                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                                                            ? 'text-yellow-700 dark:text-yellow-300'
+                                                            : 'text-gray-700 dark:text-gray-300'
                                                     }`}>
                                                         {appointment.payment_status}
                                                     </span>

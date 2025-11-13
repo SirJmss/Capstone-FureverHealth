@@ -13,14 +13,26 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-   public function index()
-{
-    $users = User::with(['pets', 'appointments'])->get();
-    return Inertia::render('Users/Index', [
-        'users' => $users,
-        // Remove the manual auth data - let the middleware handle it
-    ]);
-}
+    public function index()
+    {
+        $users = User::with(['pets', 'appointments', 'roles'])->get();
+        
+        return Inertia::render('Users/Index', [
+            'users' => $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'address' => $user->address,
+                    'phone' => $user->phone,
+                    'is_active' => $user->is_active,
+                    'deleted_at' => $user->deleted_at,
+                    'roles' => $user->roles->pluck('name')->toArray(), // Add this line
+                ];
+            }),
+        ]);
+    }
 
     /**
      * Show the form for creating a new user.

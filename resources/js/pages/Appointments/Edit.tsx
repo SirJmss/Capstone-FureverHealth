@@ -80,12 +80,26 @@ export default function EditAppointment({
         status: newStatus,
         payment_status: 'paid'
       });
+    } 
+    // If status is changed to "cancelled", automatically set payment_status to "unpaid"
+    else if (newStatus === 'cancelled') {
+      setData({
+        ...data,
+        status: newStatus,
+        payment_status: 'unpaid'
+      });
     } else {
       setData('status', newStatus);
     }
   };
 
   const handlePaymentStatusChange = (newPaymentStatus: string) => {
+    // Prevent changing payment status if appointment is cancelled
+    if (data.status === 'cancelled') {
+      alert('Cannot change payment status for cancelled appointments.');
+      return;
+    }
+
     // If status is "completed" and trying to change payment_status away from "paid", show warning
     if (data.status === 'completed' && newPaymentStatus !== 'paid') {
       if (!confirm('Completed appointments must be marked as paid. Do you want to change the status from "completed" first?')) {
@@ -108,6 +122,12 @@ export default function EditAppointment({
     // Final validation before submission
     if (data.status === 'completed' && data.payment_status !== 'paid') {
       alert('Completed appointments must be marked as paid. Please update the payment status.');
+      return;
+    }
+
+    // Validation for cancelled appointments
+    if (data.status === 'cancelled' && data.payment_status !== 'unpaid') {
+      alert('Cancelled appointments must be marked as unpaid.');
       return;
     }
     
@@ -264,6 +284,11 @@ export default function EditAppointment({
                       Payment status automatically set to "paid"
                     </p>
                   )}
+                  {data.status === 'cancelled' && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Payment status locked to "unpaid" for cancelled appointments
+                    </p>
+                  )}
                   <InputError message={errors.status} className="mt-1" />
                 </motion.div>
 
@@ -280,7 +305,7 @@ export default function EditAppointment({
                     value={data.payment_status}
                     onChange={(e) => handlePaymentStatusChange(e.target.value)}
                     className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
-                    disabled={data.status === 'completed'} // Disable if status is completed
+                    disabled={data.status === 'completed' || data.status === 'cancelled'}
                   >
                     <option value="unpaid">Unpaid</option>
                     <option value="paid">Paid</option>
@@ -289,6 +314,11 @@ export default function EditAppointment({
                   {data.status === 'completed' && (
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                       Payment status locked to "paid" for completed appointments
+                    </p>
+                  )}
+                  {data.status === 'cancelled' && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Payment status locked to "unpaid" for cancelled appointments
                     </p>
                   )}
                   <InputError message={errors.payment_status} className="mt-1" />
