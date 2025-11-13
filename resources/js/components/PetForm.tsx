@@ -25,21 +25,27 @@ export default function PetForm({ onSuccess, onClose }: PetFormProps) {
   });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    petForm.post(route("pets.store"), {
-      preserveScroll: true,
-      onSuccess: (res: any) => {
-        const newPet = res?.props?.flash?.newPet ?? null;
-        if (newPet?.id && onSuccess) onSuccess(newPet);
-        petForm.reset();
-        if (onClose) onClose();
-      },
-    });
-  };
+  petForm.post(route("pets.modalStore"), {
+    preserveScroll: true,
+    preserveState: true, 
+    onSuccess: (res: any) => {
+
+      const newPet = res.props.flash.newPet;
+      
+      if (newPet?.id && onSuccess) {
+        onSuccess(newPet);
+      }
+      
+      petForm.reset();
+      if (onClose) onClose();
+    },
+  });
+};
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+    <form onSubmit={handleSubmit} className="space-y-4 mt-2 w-full max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name">Name</Label>
@@ -157,7 +163,7 @@ export default function PetForm({ onSuccess, onClose }: PetFormProps) {
       </div>
 
       <div className="pt-4">
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50">
           Save Pet
         </Button>
       </div>

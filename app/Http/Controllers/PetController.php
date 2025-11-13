@@ -154,4 +154,42 @@ class PetController extends Controller
         return redirect()->route('pets.index')
                          ->with('success', 'Pet deleted successfully.');
     }
+
+    public function modalStore(Request $request)
+{
+    $request->validate([
+        'name'             => 'required|string|max:255',
+        'species'          => 'required|string|max:100',
+        'breed'            => 'nullable|string|max:100',
+        'gender'           => 'nullable|string|in:male,female',
+        'age'              => 'nullable|integer|min:0',
+        'weight'           => 'nullable|numeric|min:0',
+        'medical_history'  => 'nullable|string',
+        'allergies'        => 'nullable|string',
+        'vaccinated'       => 'boolean',
+        'grooming_notes'   => 'nullable|string',
+        'last_groomed_at'  => 'nullable|date',
+    ]);
+
+    $pet = Pet::create([
+        'name' => $request->name,
+        'species' => $request->species,
+        'breed' => $request->breed,
+        'gender' => $request->gender,
+        'age' => $request->age,
+        'weight' => $request->weight,
+        'medical_history' => $request->medical_history,
+        'allergies' => $request->allergies,
+        'vaccinated' => $request->vaccinated ?? false,
+        'grooming_notes' => $request->grooming_notes,
+        'last_groomed_at' => $request->last_groomed_at,
+        'user_id' => Auth::id(),
+    ]);
+
+    return response()->json([
+        'pet' => $pet,
+        'message' => 'Pet created successfully'
+    ]);
+}
+    
 }

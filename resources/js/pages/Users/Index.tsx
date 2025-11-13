@@ -238,14 +238,14 @@ export default function Index({ users, auth }: Props) {
 
                       {/* First Name */}
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-blue-800 ">
                           {user.first_name}
                         </span>
                       </td>
 
                       {/* Last Name */}
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-blue-800 ">
                           {user.last_name}
                         </span>
                       </td>
@@ -268,10 +268,10 @@ export default function Index({ users, auth }: Props) {
                       {/* Status */}
                       <td className="px-6 py-4 text-center">
                         <motion.span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all ${
+                          className={`${
                             user.is_active
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                              : 'bg-gradient-to-r from-red-500 to-rose-600 text-white'
+                              ? 'inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-emerald-800'
+                              : 'inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-emerald-800'
                           }`}
                           initial={{ scale: 0.8 }}
                           animate={{ scale: 1 }}

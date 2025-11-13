@@ -1,12 +1,16 @@
+import { useState } from "react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import PetForm from "@/components/PetForm";
 import { motion } from 'framer-motion';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 type User = { id: number; first_name: string; last_name: string };
 type Pet = { id: number; name: string; user_id: number };
@@ -19,12 +23,26 @@ interface CreateProps {
   is_admin: boolean;
 }
 
+interface PageProps extends InertiaPageProps {
+  auth: {
+    user: {
+      id: number;
+      first_name: string;
+      last_name: string;
+    };
+  };
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Appointments', href: '/appointments' },
   { title: 'Create Appointment', href: '/appointments/create' },
 ];
 
 export default function Create({ users = [], pets, services, is_admin }: CreateProps) {
+  const { auth } = usePage<PageProps>().props;
+  const [showPetModal, setShowPetModal] = useState(false);
+  const [petList, setPetList] = useState(pets);
+
   const { data, setData, post, processing, errors } = useForm({
     user_id: '',
     pet_id: '',
@@ -36,20 +54,61 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
     staff_remarks: '',
   });
 
-  // Non-admin: auto-fill user_id from first pet
-  const currentUserId = !is_admin && pets.length > 0 ? pets[0].user_id.toString() : '';
-  const filteredPets = is_admin && data.user_id
-    ? pets.filter(p => p.user_id === Number(data.user_id))
-    : pets;
+  // Non-admin: auto-fill user_id
+  const currentUserId = !is_admin ? auth.user.id.toString() : '';
+  const filteredPets =
+    is_admin && data.user_id
+      ? petList.filter(p => p.user_id === Number(data.user_id))
+      : !is_admin
+      ? petList.filter(p => p.user_id === auth.user.id)
+      : petList;
+
+  const handleStatusChange = (newStatus: string) => {
+    // If status is changed to "completed", automatically set payment_status to "paid"
+    if (newStatus === 'completed' && data.payment_status !== 'paid') {
+      setData({
+        ...data,
+        status: newStatus,
+        payment_status: 'paid'
+      });
+    } else {
+      setData('status', newStatus);
+    }
+  };
+
+  const handlePaymentStatusChange = (newPaymentStatus: string) => {
+    // If status is "completed" and trying to change payment_status away from "paid", show warning
+    if (data.status === 'completed' && newPaymentStatus !== 'paid') {
+      if (!confirm('Completed appointments must be marked as paid. Do you want to change the status from "completed" first?')) {
+        return; // Don't change the payment status
+      }
+      // If user confirms, change both status and payment status
+      setData({
+        ...data,
+        status: 'confirmed', // Or whatever status you prefer
+        payment_status: newPaymentStatus
+      });
+    } else {
+      setData('payment_status', newPaymentStatus);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!is_admin && currentUserId) {
-      setData('user_id', currentUserId);
+    
+    // Final validation before submission
+    if (data.status === 'completed' && data.payment_status !== 'paid') {
+      alert('Completed appointments must be marked as paid. Please update the payment status.');
+      return;
     }
-
+    
+    if (!is_admin && currentUserId) setData('user_id', currentUserId);
     post(route('appointments.store'));
+  };
+
+  const handlePetAdded = (newPet: Pet) => {
+    setPetList(prev => [...prev, newPet]);
+    setShowPetModal(false);
   };
 
   return (
@@ -63,6 +122,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300 }}
         >
+          {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -75,15 +135,18 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             </Link>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* ADMIN: Select Customer - HIDDEN FOR CUSTOMERS */}
+            {/* ADMIN: Select Customer */}
             {is_admin && (
               <div>
                 <Label htmlFor="user_id">Customer *</Label>
                 <select
                   id="user_id"
                   value={data.user_id}
-                  onChange={(e) => setData({ ...data, user_id: e.target.value, pet_id: '' })}
+                  onChange={(e) =>
+                    setData({ ...data, user_id: e.target.value, pet_id: '' })
+                  }
                   className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
                   required
                 >
@@ -102,24 +165,33 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="pet_id">Pet *</Label>
-                <select
-                  id="pet_id"
-                  value={data.pet_id}
-                  onChange={(e) => setData('pet_id', e.target.value)}
-                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
-                  required
-                  disabled={is_admin && !data.user_id}
-                >
-                  <option value="">
-                    {is_admin
-                      ? data.user_id ? 'Select Pet' : 'Select Customer First'
-                      : pets.length === 0 ? 'No pets available' : 'Select Pet'}
-                  </option>
-                  {filteredPets.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                {!is_admin && pets.length === 0 && (
+                <div className="flex gap-3 mt-2">
+                  <select
+                    id="pet_id"
+                    value={data.pet_id}
+                    onChange={(e) => setData('pet_id', e.target.value)}
+                    className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                    required
+                    disabled={is_admin && !data.user_id}
+                  >
+                    <option value="">
+                      {is_admin
+                        ? data.user_id
+                          ? 'Select Pet'
+                          : 'Select Customer First'
+                        : petList.length === 0
+                        ? 'No pets available'
+                        : 'Select Pet'}
+                    </option>
+                    {filteredPets.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {!is_admin && filteredPets.length === 0 && (
                   <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
                     You need to add a pet before creating an appointment.
                   </p>
@@ -147,7 +219,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               </div>
             </div>
 
-            {/* Date & Time - VISIBLE TO ALL */}
+            {/* Date & Time */}
             <div>
               <Label htmlFor="appointment_date">Date & Time *</Label>
               <Input
@@ -161,7 +233,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               <InputError message={errors.appointment_date} className="mt-1" />
             </div>
 
-            {/* Status & Payment - HIDDEN FOR CUSTOMERS */}
+            {/* Status & Payment (Admin Only) */}
             {is_admin && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -169,7 +241,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
                   <select
                     id="status"
                     value={data.status}
-                    onChange={(e) => setData('status', e.target.value)}
+                    onChange={(e) => handleStatusChange(e.target.value)}
                     className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
                   >
                     <option value="pending">Pending</option>
@@ -177,6 +249,11 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                  {data.status === 'completed' && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      Payment status automatically set to "paid"
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -184,18 +261,24 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
                   <select
                     id="payment_status"
                     value={data.payment_status}
-                    onChange={(e) => setData('payment_status', e.target.value)}
+                    onChange={(e) => handlePaymentStatusChange(e.target.value)}
                     className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                    disabled={data.status === 'completed'} // Disable if status is completed
                   >
                     <option value="unpaid">Unpaid</option>
                     <option value="paid">Paid</option>
                     <option value="refunded">Refunded</option>
                   </select>
+                  {data.status === 'completed' && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Payment status locked to "paid" for completed appointments
+                    </p>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Staff Remarks (Admin Only) - HIDDEN FOR CUSTOMERS */}
+            {/* Staff Remarks */}
             {is_admin && (
               <div>
                 <Label htmlFor="staff_remarks">Staff Remarks</Label>
@@ -210,7 +293,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               </div>
             )}
 
-            {/* Notes - VISIBLE TO ALL */}
+            {/* Notes */}
             <div>
               <Label htmlFor="notes">
                 {is_admin ? 'Customer Notes (Optional)' : 'Notes (Optional)'}
@@ -219,7 +302,9 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
                 id="notes"
                 value={data.notes}
                 onChange={(e) => setData('notes', e.target.value)}
-                placeholder={is_admin ? "Customer's special requests..." : "Any special requests..."}
+                placeholder={is_admin
+                  ? "Customer's special requests..."
+                  : "Any special requests..."}
                 className="w-full h-24 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-3 resize-none text-gray-900 dark:text-white"
               />
             </div>
@@ -228,18 +313,25 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             <div className="flex justify-end">
               <Button
                 type="submit"
-                disabled={processing || (!is_admin && pets.length === 0)}
+                disabled={processing || (!is_admin && filteredPets.length === 0)}
                 className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50"
               >
                 {processing ? 'Creating...' : 'Create Appointment'}
               </Button>
             </div>
-
-            {/* Info message for customers */}
-            
           </form>
         </motion.div>
       </motion.div>
+
+      {/* Pet Modal */}
+      <Dialog open={showPetModal} onOpenChange={setShowPetModal}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto rounded-2xl p-6"> 
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Add New Pet</DialogTitle>
+          </DialogHeader>
+          <PetForm onSuccess={handlePetAdded} onClose={() => setShowPetModal(false)} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

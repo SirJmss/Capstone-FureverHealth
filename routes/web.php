@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('services', ServiceController::class);
     Route::resource('history',HistoryController::class);
 
+    Route::post('/pets/modal-store', [PetController::class, 'modalStore']);
     Route::get('/appointments/{appointment}/receipt', [ReceiptController::class, 'generateReceipt'])
         ->name('appointments.receipt');
     Route::get('/appointments/{appointment}/receipt/view', [ReceiptController::class, 'viewReceipt'])

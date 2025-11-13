@@ -72,8 +72,45 @@ export default function EditAppointment({
     payment_status: appointment.payment_status || "unpaid",
   });
 
+  const handleStatusChange = (newStatus: string) => {
+    // If status is changed to "completed", automatically set payment_status to "paid"
+    if (newStatus === 'completed' && data.payment_status !== 'paid') {
+      setData({
+        ...data,
+        status: newStatus,
+        payment_status: 'paid'
+      });
+    } else {
+      setData('status', newStatus);
+    }
+  };
+
+  const handlePaymentStatusChange = (newPaymentStatus: string) => {
+    // If status is "completed" and trying to change payment_status away from "paid", show warning
+    if (data.status === 'completed' && newPaymentStatus !== 'paid') {
+      if (!confirm('Completed appointments must be marked as paid. Do you want to change the status from "completed" first?')) {
+        return; // Don't change the payment status
+      }
+      // If user confirms, change both status and payment status
+      setData({
+        ...data,
+        status: 'confirmed', // Or whatever status you prefer
+        payment_status: newPaymentStatus
+      });
+    } else {
+      setData('payment_status', newPaymentStatus);
+    }
+  };
+
   const submitAppointment = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final validation before submission
+    if (data.status === 'completed' && data.payment_status !== 'paid') {
+      alert('Completed appointments must be marked as paid. Please update the payment status.');
+      return;
+    }
+    
     put(route("appointments.update", appointment.id));
   };
 
@@ -214,7 +251,7 @@ export default function EditAppointment({
                   <select
                     id="status"
                     value={data.status}
-                    onChange={(e) => setData("status", e.target.value)}
+                    onChange={(e) => handleStatusChange(e.target.value)}
                     className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
                   >
                     <option value="pending">Pending</option>
@@ -222,6 +259,11 @@ export default function EditAppointment({
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                  {data.status === 'completed' && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      Payment status automatically set to "paid"
+                    </p>
+                  )}
                   <InputError message={errors.status} className="mt-1" />
                 </motion.div>
 
@@ -236,13 +278,19 @@ export default function EditAppointment({
                   <select
                     id="payment_status"
                     value={data.payment_status}
-                    onChange={(e) => setData("payment_status", e.target.value)}
+                    onChange={(e) => handlePaymentStatusChange(e.target.value)}
                     className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
+                    disabled={data.status === 'completed'} // Disable if status is completed
                   >
                     <option value="unpaid">Unpaid</option>
                     <option value="paid">Paid</option>
                     <option value="refunded">Refunded</option>
                   </select>
+                  {data.status === 'completed' && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Payment status locked to "paid" for completed appointments
+                    </p>
+                  )}
                   <InputError message={errors.payment_status} className="mt-1" />
                 </motion.div>
               </div>
