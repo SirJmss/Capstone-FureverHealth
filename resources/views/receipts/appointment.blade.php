@@ -126,8 +126,16 @@
             <div>Appointment ID:</div>
             <div>#{{ $appointment->id }}</div>
             
-            <div>Date & Time:</div>
-            <div>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y g:i A') }}</div>
+            <div>Date:</div>
+            <div>{{ \Carbon\Carbon::parse($appointment->schedule->date ?? $appointment->created_at)->format('F j, Y') }}</div>
+            
+            @if($appointment->schedule && $appointment->schedule->timeslot)
+            <div>Time:</div>
+            <div>
+                {{ \Carbon\Carbon::parse($appointment->schedule->timeslot->start_time)->format('g:i A') }} - 
+                {{ \Carbon\Carbon::parse($appointment->schedule->timeslot->end_time)->format('g:i A') }}
+            </div>
+            @endif
             
             <div>Status:</div>
             <div>
@@ -191,6 +199,13 @@
     <div class="section">
         <div class="section-title">CUSTOMER NOTES</div>
         <div style="font-size: 8px; line-height: 1.3;">{{ $appointment->notes }}</div>
+    </div>
+    @endif
+
+    @if($appointment->staff_remarks)
+    <div class="section">
+        <div class="section-title">STAFF REMARKS</div>
+        <div style="font-size: 8px; line-height: 1.3;">{{ $appointment->staff_remarks }}</div>
     </div>
     @endif
 

@@ -18,8 +18,6 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Pet owner
             $table->foreignId('pet_id')->constrained()->onDelete('cascade');  // Pet
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
-            // Appointment details
-            $table->dateTime('appointment_date'); // Scheduled date and time
           // Status tracking
             $table->enum('status', [
                 'pending',

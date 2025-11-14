@@ -22,9 +22,27 @@ interface Service {
     price: number;
 }
 
+interface TimeSlot {
+    id: number;
+    start_time: string;
+    end_time: string;
+}
+
+interface Schedule {
+    id: number;
+    appointment_id: number;
+    time_id: number;
+    date: string;
+    status: string;
+    notes?: string;
+    timeslot: TimeSlot;
+}
+
 interface Appointment {
     id: number;
-    appointment_date: string;
+    user_id: number;
+    pet_id: number;
+    service_id: number;
     status: string;
     payment_status: string;
     notes?: string;
@@ -32,6 +50,7 @@ interface Appointment {
     user: User;
     pet: Pet;
     service: Service;
+    schedule?: Schedule;
     created_at: string;
     updated_at: string;
 }
@@ -57,25 +76,73 @@ const formatDate = (dateString: string) => {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
     });
 };
 
-const handleDownload = (appointmentId: number) => {
-    const link = document.createElement('a');
-    link.href = route('appointments.receipt', appointmentId);
-    link.setAttribute('download', '');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
+const formatTime = (timeString: string) => {
+    if (!timeString) return 'Invalid Time';
     
+    try {
+        if (timeString.includes('T')) {
+            const timePart = timeString.split('T')[1];
+            const timeWithoutMicroseconds = timePart.split('.')[0];
+            const [hours, minutes] = timeWithoutMicroseconds.split(':');
+            
+            const hour = parseInt(hours, 10);
+            const minute = parseInt(minutes, 10);
+            
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const twelveHour = hour % 12 || 12;
+            const formattedMinutes = minute.toString().padStart(2, '0');
+            
+            return `${twelveHour}:${formattedMinutes} ${period}`;
+        }
+        
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+        
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const twelveHour = hour % 12 || 12;
+        const formattedMinutes = minute.toString().padStart(2, '0');
+        
+        return `${twelveHour}:${formattedMinutes} ${period}`;
+    } catch (error) {
+        return 'Invalid Time';
+    }
+};
+
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
         style: 'currency',
         currency: 'PHP',
     }).format(amount);
+};
+
+const getStatusBadge = (status: string) => {
+    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
+    
+    switch (status) {
+        case 'completed':
+            return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100`;
+        default:
+            return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100`;
+    }
+};
+
+const getPaymentStatusBadge = (paymentStatus: string) => {
+    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
+    
+    switch (paymentStatus) {
+        case 'paid':
+            return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100`;
+        case 'unpaid':
+            return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100`;
+        case 'refunded':
+            return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100`;
+        default:
+            return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100`;
+    }
 };
 
 export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
@@ -95,18 +162,25 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                    Completed Appointments
+                                    Appointment History
                                 </h1>
                                 <p className="text-gray-600 dark:text-gray-400 mt-2">
                                     View your completed service history and download receipts
                                 </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        Total Completed: {appointments.data.length}
+                                    </span>
+                                </div>
                             </div>
-                            <Link
-                                href={route('appointments.index')}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition"
-                            >
-                                Back to Appointments
-                            </Link>
+                            <div className="flex gap-3">
+                                <Link
+                                    href={route('appointments.index')}
+                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition"
+                                >
+                                    Back to Appointments
+                                </Link>
+                            </div>
                         </div>
                     </motion.div>
 
@@ -124,14 +198,11 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                                 </svg>
                                 <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No completed appointments</h3>
                                 <p className="mt-2 text-gray-500 dark:text-gray-400">
-                                    You don't have any completed appointments yet.
+                                    {is_admin 
+                                        ? "There are no completed appointments in the system yet."
+                                        : "You don't have any completed appointments yet."
+                                    }
                                 </p>
-                                <Link
-                                    href={route('appointments.create')}
-                                    className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
-                                >
-                                    Schedule New Appointment
-                                </Link>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -189,12 +260,28 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                                                         <div className="text-sm text-gray-500 dark:text-gray-400">
                                                             {appointment.service.name}
                                                         </div>
+                                                        {appointment.notes && (
+                                                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                                Note: {appointment.notes}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900 dark:text-white">
-                                                        {formatDate(appointment.appointment_date)}
-                                                    </div>
+                                                    {appointment.schedule ? (
+                                                        <>
+                                                            <div className="text-sm text-gray-900 dark:text-white">
+                                                                {formatDate(appointment.schedule.date)}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {formatTime(appointment.schedule.timeslot.start_time)} - {formatTime(appointment.schedule.timeslot.end_time)}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                            Completed appointment
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm font-semibold text-green-600 dark:text-green-400">
@@ -202,19 +289,12 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        appointment.payment_status === 'paid' 
-                                                            ? 'text-green-700 dark:text-green-300'
-                                                            : appointment.payment_status === 'unpaid'
-                                                            ? 'text-yellow-700 dark:text-yellow-300'
-                                                            : 'text-gray-700 dark:text-gray-300'
-                                                    }`}>
+                                                    <span className={getPaymentStatusBadge(appointment.payment_status)}>
                                                         {appointment.payment_status}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                     <div className="flex items-center space-x-2">
-                                                        {/* Download PDF - Use regular <a> tag */}
                                                         <a 
                                                             href={route('appointments.receipt', appointment.id)}
                                                             className="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition"
@@ -224,8 +304,6 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                                                             </svg>
                                                             Download PDF
                                                         </a>
-
-                                                        {/* View Receipt - Keep as Link since it opens HTML in new tab */}
                                                         <Link
                                                             href={route('appointments.receipt.view', appointment.id)}
                                                             target="_blank"
@@ -251,7 +329,7 @@ export default function HistoryIndex({ appointments, is_admin }: HistoryProps) {
                             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
                                 <div className="flex items-center justify-between">
                                     <div className="text-sm text-gray-700 dark:text-gray-300">
-                                        Showing {appointments.data.length} of {appointments.data.length} results
+                                        Showing page {appointments.current_page} of {appointments.last_page}
                                     </div>
                                     <div className="flex space-x-2">
                                         {appointments.links.map((link, index) => (

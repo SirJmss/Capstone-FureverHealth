@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,14 @@ import { type BreadcrumbItem } from "@/types";
 interface AppointmentProps {
   pets: { id: number; name: string; user_id: number }[];
   services: { id: number; name: string; price: number }[];
+  timeslots: { 
+    id: number; 
+    start_time: string; 
+    end_time: string; 
+    max_appointments: number;
+    is_active: boolean;
+    description?: string;
+  }[];
   users?: { id: number; first_name: string; last_name: string }[];
   is_admin: boolean;
   appointment: {
@@ -21,11 +29,16 @@ interface AppointmentProps {
     user_id: number;
     pet_id: number;
     service_id: number;
-    appointment_date: string;
+    date: string; // This now comes from schedule
+    time_id: number; // This now comes from schedule
     status: string;
     notes: string;
     staff_remarks?: string;
     payment_status: string;
+    schedule?: {
+      date: string;
+      time_id: number;
+    };
   };
 }
 
@@ -50,27 +63,90 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function EditAppointment({
   pets,
   services,
+  timeslots,
   users,
   is_admin,
   appointment,
 }: AppointmentProps) {
   const [showPetModal, setShowPetModal] = useState(false);
   const { auth } = usePage<PageProps>().props;
+  
+  // Format date for input field (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return '';
+    
+    try {
+      // If it's already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+      }
+      
+      // If it's a different format, try to parse it
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+      
+      return '';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
 
-  // Show only user's pets
-  const userPets = pets.filter((pet) => pet.user_id === auth.user.id);
+  // Prioritize schedule data over appointment data
+  const initialDate = formatDateForInput(appointment.schedule?.date || appointment.date);
+  const initialTimeId = appointment.schedule?.time_id || appointment.time_id;
+
+  const [selectedDate, setSelectedDate] = useState(initialDate || '');
+  const [filteredTimeslots, setFilteredTimeslots] = useState(timeslots.filter(timeslot => timeslot.is_active));
+
+  // Show only user's pets for non-admin users
+  const userPets = is_admin ? pets : pets.filter((pet) => pet.user_id === auth.user.id);
   const [petList, setPetList] = useState(userPets);
 
+  // Debug: Log the received data
+  useEffect(() => {
+    console.log('Appointment data received:', appointment);
+    console.log('Schedule data:', appointment.schedule);
+    console.log('Initial date:', initialDate);
+    console.log('Initial time ID:', initialTimeId);
+  }, [appointment, initialDate, initialTimeId]);
+
+  // In the component, update the initial state to prioritize schedule data
   const { data, setData, put, processing, errors } = useForm({
     user_id: appointment.user_id.toString(),
     pet_id: appointment.pet_id?.toString() || "",
     service_id: appointment.service_id?.toString() || "",
-    appointment_date: appointment.appointment_date || "",
+    date: initialDate || "", // Prioritize schedule date
+    time_id: initialTimeId?.toString() || "", // Prioritize schedule time_id
     status: appointment.status || "pending",
     notes: appointment.notes || "",
     staff_remarks: appointment.staff_remarks || "",
     payment_status: appointment.payment_status || "unpaid",
   });
+
+  // Filter pets based on selected user (for admin)
+  const filteredPets =
+    is_admin && data.user_id
+      ? petList.filter(p => p.user_id === Number(data.user_id))
+      : !is_admin
+      ? petList.filter(p => p.user_id === auth.user.id)
+      : petList;
+
+  // Handle date change and filter available timeslots
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setData('date', date);
+    
+    if (date) {
+      // Filter active timeslots
+      const availableTimeslots = timeslots.filter(timeslot => timeslot.is_active);
+      setFilteredTimeslots(availableTimeslots);
+    } else {
+      setFilteredTimeslots([]);
+    }
+  };
 
   const handleStatusChange = (newStatus: string) => {
     // If status is changed to "completed", automatically set payment_status to "paid"
@@ -119,16 +195,30 @@ export default function EditAppointment({
   const submitAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Final validation before submission
-    if (data.status === 'completed' && data.payment_status !== 'paid') {
-      alert('Completed appointments must be marked as paid. Please update the payment status.');
-      return;
-    }
+    // Skip date/timeslot validation for completed appointments
+    if (data.status !== 'completed') {
+      // Final validation before submission for non-completed appointments
+      if (data.status === 'completed' && data.payment_status !== 'paid') {
+        alert('Completed appointments must be marked as paid. Please update the payment status.');
+        return;
+      }
 
-    // Validation for cancelled appointments
-    if (data.status === 'cancelled' && data.payment_status !== 'unpaid') {
-      alert('Cancelled appointments must be marked as unpaid.');
-      return;
+      // Validation for cancelled appointments
+      if (data.status === 'cancelled' && data.payment_status !== 'unpaid') {
+        alert('Cancelled appointments must be marked as unpaid.');
+        return;
+      }
+
+      // Validation for date and timeslot (only for non-completed appointments)
+      if (!data.date) {
+        alert('Please select a date for the appointment.');
+        return;
+      }
+
+      if (!data.time_id) {
+        alert('Please select a timeslot for the appointment.');
+        return;
+      }
     }
     
     put(route("appointments.update", appointment.id));
@@ -140,6 +230,69 @@ export default function EditAppointment({
     }
     setShowPetModal(false);
   };
+
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    if (!timeString) return 'Invalid Time';
+    
+    try {
+      // Handle ISO datetime strings like "2025-11-14T09:00:00.000000Z"
+      if (timeString.includes('T')) {
+        // Extract just the time part (HH:MM:SS)
+        const timePart = timeString.split('T')[1];
+        const timeWithoutMicroseconds = timePart.split('.')[0];
+        const [hours, minutes] = timeWithoutMicroseconds.split(':');
+        
+        const hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+        
+        if (isNaN(hour) || isNaN(minute)) {
+          return 'Invalid Time';
+        }
+        
+        // Convert to 12-hour format
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const twelveHour = hour % 12 || 12;
+        const formattedMinutes = minute.toString().padStart(2, '0');
+        
+        return `${twelveHour}:${formattedMinutes} ${period}`;
+      }
+      
+      // If it's already just a time string like "09:00:00"
+      const [hours, minutes] = timeString.split(':');
+      const hour = parseInt(hours, 10);
+      const minute = parseInt(minutes, 10);
+      
+      if (isNaN(hour) || isNaN(minute)) {
+        return 'Invalid Time';
+      }
+      
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const twelveHour = hour % 12 || 12;
+      const formattedMinutes = minute.toString().padStart(2, '0');
+      
+      return `${twelveHour}:${formattedMinutes} ${period}`;
+    } catch (error) {
+      console.error('Error formatting time:', error, 'Time string:', timeString);
+      return 'Invalid Time';
+    }
+  };
+
+  // Get minimum date (today)
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Auto-fill user_id for non-admin users
+  useEffect(() => {
+    if (!is_admin) {
+      setData('user_id', auth.user.id.toString());
+    }
+  }, [is_admin, auth.user.id, setData]);
+
+  // Show warning if editing a completed appointment
+  const isCompletedAppointment = data.status === 'completed';
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -182,14 +335,137 @@ export default function EditAppointment({
             </Link>
           </div>
 
+          {/* Completed Appointment Warning */}
+          {isCompletedAppointment && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl"
+            >
+              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">Completed Appointment</span>
+              </div>
+              <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
+                This appointment is marked as completed. Date and timeslot are no longer required and the schedule has been cleared.
+              </p>
+            </motion.div>
+          )}
+
           {/* Form */}
           <form onSubmit={submitAppointment} className="space-y-6">
+            {/* ADMIN: Select Customer */}
+            {is_admin && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Label htmlFor="user_id" className="text-gray-700 dark:text-gray-300 font-medium">
+                  Customer
+                </Label>
+                <select
+                  id="user_id"
+                  value={data.user_id}
+                  onChange={(e) => setData({ ...data, user_id: e.target.value, pet_id: '' })}
+                  className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
+                >
+                  <option value="">Select Customer</option>
+                  {users?.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name}
+                    </option>
+                  ))}
+                </select>
+                <InputError message={errors.user_id} className="mt-1" />
+              </motion.div>
+            )}
+
+            {/* Date & Timeslot - Only show for non-completed appointments */}
+            {!isCompletedAppointment && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <Label htmlFor="date" className="text-gray-700 dark:text-gray-300 font-medium">
+                    Appointment Date
+                    {!data.date && (
+                      <span className="text-sm text-red-500 ml-2">(No date set)</span>
+                    )}
+                  </Label>
+                  <Input
+                    type="date"
+                    id="date"
+                    value={data.date}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    min={getMinDate()}
+                    className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <InputError message={errors.date} className="mt-1" />
+                  {/* Debug info */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Raw date: {appointment.date} | Schedule date: {appointment.schedule?.date} | Formatted: {data.date}
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Label htmlFor="time_id" className="text-gray-700 dark:text-gray-300 font-medium">
+                    Timeslot
+                  </Label>
+                  <select
+                    id="time_id"
+                    value={data.time_id}
+                    onChange={(e) => setData("time_id", e.target.value)}
+                    className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
+                    disabled={!data.date}
+                  >
+                    <option value="">
+                      {!data.date ? 'Select Date First' : filteredTimeslots.length === 0 ? 'No available timeslots' : 'Select Timeslot'}
+                    </option>
+                    {filteredTimeslots.map((timeslot) => (
+                      <option key={timeslot.id} value={timeslot.id}>
+                        {formatTime(timeslot.start_time)} - {formatTime(timeslot.end_time)}
+                        {timeslot.description && ` (${timeslot.description})`}
+                      </option>
+                    ))}
+                  </select>
+                  {data.date && filteredTimeslots.length === 0 && (
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                      No available timeslots for the selected date.
+                    </p>
+                  )}
+                  <InputError message={errors.time_id} className="mt-1" />
+                </motion.div>
+              </div>
+            )}
+
+            {/* Show message for completed appointments */}
+            {isCompletedAppointment && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
+              >
+                <p className="text-blue-700 dark:text-blue-300 text-sm">
+                  <strong>Note:</strong> This completed appointment no longer has an associated schedule. 
+                  If you change the status from "completed", you'll need to select a new date and timeslot.
+                </p>
+              </motion.div>
+            )}
 
             {/* Pet Selection */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.25 }}
+              transition={{ delay: 0.35 }}
             >
               <Label htmlFor="pet_id" className="text-gray-700 dark:text-gray-300 font-medium">
                 Select Pet
@@ -200,16 +476,39 @@ export default function EditAppointment({
                   value={data.pet_id}
                   onChange={(e) => setData("pet_id", e.target.value)}
                   className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3"
+                  disabled={is_admin && !data.user_id}
                 >
-                  <option value="">Select Pet</option>
-                  {petList.map((pet) => (
+                  <option value="">
+                    {is_admin
+                      ? data.user_id
+                        ? 'Select Pet'
+                        : 'Select Customer First'
+                      : filteredPets.length === 0
+                      ? 'No pets available'
+                      : 'Select Pet'}
+                  </option>
+                  {filteredPets.map((pet) => (
                     <option key={pet.id} value={pet.id}>
                       {pet.name}
                     </option>
                   ))}
                 </select>
-               
+                {!is_admin && (
+                  <Button
+                    type="button"
+                    onClick={() => setShowPetModal(true)}
+                    variant="outline"
+                    className="whitespace-nowrap"
+                  >
+                    Add Pet
+                  </Button>
+                )}
               </div>
+              {!is_admin && filteredPets.length === 0 && (
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                  You need to add a pet before updating an appointment.
+                </p>
+              )}
               <InputError message={errors.pet_id} className="mt-1" />
             </motion.div>
 
@@ -217,7 +516,7 @@ export default function EditAppointment({
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
             >
               <Label htmlFor="service_id" className="text-gray-700 dark:text-gray-300 font-medium">
                 Select Service
@@ -238,32 +537,13 @@ export default function EditAppointment({
               <InputError message={errors.service_id} className="mt-1" />
             </motion.div>
 
-            {/* Appointment Date */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.35 }}
-            >
-              <Label htmlFor="appointment_date" className="text-gray-700 dark:text-gray-300 font-medium">
-                Appointment Date & Time
-              </Label>
-              <Input
-                type="datetime-local"
-                id="appointment_date"
-                value={data.appointment_date}
-                onChange={(e) => setData("appointment_date", e.target.value)}
-                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <InputError message={errors.appointment_date} className="mt-1" />
-            </motion.div>
-
             {/* Admin Fields */}
             {is_admin && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <motion.div
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.45 }}
                 >
                   <Label htmlFor="status" className="text-gray-700 dark:text-gray-300 font-medium">
                     Status
@@ -295,7 +575,7 @@ export default function EditAppointment({
                 <motion.div
                   initial={{ x: 30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.45 }}
                 >
                   <Label htmlFor="payment_status" className="text-gray-700 dark:text-gray-300 font-medium">
                     Payment Status
@@ -377,7 +657,7 @@ export default function EditAppointment({
             >
               <Button
                 type="submit"
-                disabled={processing}
+                disabled={processing || (!is_admin && filteredPets.length === 0)}
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-lg shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
               >
                 {processing ? (

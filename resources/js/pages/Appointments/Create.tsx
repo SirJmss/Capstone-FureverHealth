@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -15,12 +15,25 @@ import { PageProps as InertiaPageProps } from '@inertiajs/core';
 type User = { id: number; first_name: string; last_name: string };
 type Pet = { id: number; name: string; user_id: number };
 type Service = { id: number; name: string; price: number };
+type Timeslot = { 
+  id: number; 
+  start_time: string; 
+  end_time: string; 
+  max_appointments: number;
+  is_active: boolean;
+  description?: string;
+};
 
 interface CreateProps {
   users?: User[];
   pets: Pet[];
   services: Service[];
+  timeslots: Timeslot[];
   is_admin: boolean;
+  existing_schedules?: Array<{
+    date: string;
+    time_id: number;
+  }>;
 }
 
 interface PageProps extends InertiaPageProps {
@@ -38,21 +51,27 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Create Appointment', href: '/appointments/create' },
 ];
 
-export default function Create({ users = [], pets, services, is_admin }: CreateProps) {
+export default function Create({ users = [], pets, services, timeslots, is_admin, existing_schedules = [] }: CreateProps) {
   const { auth } = usePage<PageProps>().props;
   const [showPetModal, setShowPetModal] = useState(false);
   const [petList, setPetList] = useState(pets);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [filteredTimeslots, setFilteredTimeslots] = useState<Timeslot[]>([]);
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<Set<number>>(new Set());
 
   const { data, setData, post, processing, errors } = useForm({
     user_id: '',
     pet_id: '',
     service_id: '',
-    appointment_date: '',
+    date: '',
+    time_id: '',
     status: 'pending',
     payment_status: 'unpaid',
     notes: '',
     staff_remarks: '',
   });
+
+
 
   // Non-admin: auto-fill user_id
   const currentUserId = !is_admin ? auth.user.id.toString() : '';
@@ -63,17 +82,72 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
       ? petList.filter(p => p.user_id === auth.user.id)
       : petList;
 
+  // Update booked time slots when date changes
+  useEffect(() => {
+    if (data.date) {
+      // Normalize the date format to ensure matching
+      const normalizedDate = data.date;
+      
+      console.log(`Filtering schedules for date: ${normalizedDate}`);
+      
+      const bookedForDate = existing_schedules
+        .filter(schedule => {
+          // Handle both date formats - ensure they match
+          const scheduleDate = schedule.date.split(' ')[0]; // Remove time part if exists
+          const scheduleDateNormalized = new Date(scheduleDate).toISOString().split('T')[0];
+          const matches = scheduleDateNormalized === normalizedDate;
+          
+          if (matches) {
+            console.log(`Found booked timeslot: ${schedule.time_id} for date ${scheduleDate}`);
+          }
+          
+          return matches;
+        })
+        .map(schedule => schedule.time_id);
+      
+      console.log(`Final booked time slots for ${normalizedDate}:`, bookedForDate);
+      setBookedTimeSlots(new Set(bookedForDate));
+    } else {
+      setBookedTimeSlots(new Set());
+    }
+  }, [data.date, existing_schedules]);
+
+  // Handle date change and filter available timeslots
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setData('date', date);
+    setData('time_id', '');
+
+    if (date) {
+      // Filter active timeslots
+      const availableTimeslots = timeslots.filter(timeslot => timeslot.is_active);
+      setFilteredTimeslots(availableTimeslots);
+    } else {
+      setFilteredTimeslots([]);
+    }
+  };
+
+  // Check if a timeslot is available
+  const isTimeslotAvailable = (timeslotId: number) => {
+    if (!data.date) return true;
+    const isAvailable = !bookedTimeSlots.has(timeslotId);
+    console.log(`Timeslot ${timeslotId} available: ${isAvailable}`);
+    return isAvailable;
+  };
+
+  // Get available timeslots count
+  const availableTimeslotsCount = filteredTimeslots.filter(timeslot => 
+    isTimeslotAvailable(timeslot.id)
+  ).length;
+
   const handleStatusChange = (newStatus: string) => {
-    // If status is changed to "completed", automatically set payment_status to "paid"
     if (newStatus === 'completed' && data.payment_status !== 'paid') {
       setData({
         ...data,
         status: newStatus,
         payment_status: 'paid'
       });
-    } 
-    // If status is changed to "cancelled", automatically set payment_status to "unpaid"
-    else if (newStatus === 'cancelled') {
+    } else if (newStatus === 'cancelled') {
       setData({
         ...data,
         status: newStatus,
@@ -85,21 +159,18 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
   };
 
   const handlePaymentStatusChange = (newPaymentStatus: string) => {
-    // Prevent changing payment status if appointment is cancelled
     if (data.status === 'cancelled') {
       alert('Cannot change payment status for cancelled appointments.');
       return;
     }
 
-    // If status is "completed" and trying to change payment_status away from "paid", show warning
     if (data.status === 'completed' && newPaymentStatus !== 'paid') {
       if (!confirm('Completed appointments must be marked as paid. Do you want to change the status from "completed" first?')) {
-        return; // Don't change the payment status
+        return;
       }
-      // If user confirms, change both status and payment status
       setData({
         ...data,
-        status: 'confirmed', // Or whatever status you prefer
+        status: 'confirmed',
         payment_status: newPaymentStatus
       });
     } else {
@@ -110,15 +181,20 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Final validation before submission
-    if (data.status === 'completed' && data.payment_status !== 'paid') {
-      alert('Completed appointments must be marked as paid. Please update the payment status.');
+    // Frontend validation for double booking
+    if (data.date && data.time_id && !isTimeslotAvailable(Number(data.time_id))) {
+      alert('This timeslot is already booked. Please select a different timeslot.');
       return;
     }
 
-    // Validation for cancelled appointments
-    if (data.status === 'cancelled' && data.payment_status !== 'unpaid') {
-      alert('Cancelled appointments must be marked as unpaid.');
+    // Validation for date and timeslot
+    if (!data.date) {
+      alert('Please select a date for the appointment.');
+      return;
+    }
+
+    if (!data.time_id) {
+      alert('Please select a timeslot for the appointment.');
       return;
     }
     
@@ -129,6 +205,59 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
   const handlePetAdded = (newPet: Pet) => {
     setPetList(prev => [...prev, newPet]);
     setShowPetModal(false);
+  };
+
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    if (!timeString) return 'Invalid Time';
+    
+    try {
+      // Handle ISO datetime strings like "2025-11-14T09:00:00.000000Z"
+      if (timeString.includes('T')) {
+        // Extract just the time part (HH:MM:SS)
+        const timePart = timeString.split('T')[1];
+        const timeWithoutMicroseconds = timePart.split('.')[0];
+        const [hours, minutes] = timeWithoutMicroseconds.split(':');
+        
+        const hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+        
+        if (isNaN(hour) || isNaN(minute)) {
+          return 'Invalid Time';
+        }
+        
+        // Convert to 12-hour format
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const twelveHour = hour % 12 || 12;
+        const formattedMinutes = minute.toString().padStart(2, '0');
+        
+        return `${twelveHour}:${formattedMinutes} ${period}`;
+      }
+      
+      // If it's already just a time string like "09:00:00"
+      const [hours, minutes] = timeString.split(':');
+      const hour = parseInt(hours, 10);
+      const minute = parseInt(minutes, 10);
+      
+      if (isNaN(hour) || isNaN(minute)) {
+        return 'Invalid Time';
+      }
+      
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const twelveHour = hour % 12 || 12;
+      const formattedMinutes = minute.toString().padStart(2, '0');
+      
+      return `${twelveHour}:${formattedMinutes} ${period}`;
+    } catch (error) {
+      console.error('Error formatting time:', error, 'Time string:', timeString);
+      return 'Invalid Time';
+    }
+  };
+
+  // Get minimum date (today)
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
   };
 
   return (
@@ -155,6 +284,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             </Link>
           </div>
 
+         
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* ADMIN: Select Customer */}
@@ -239,18 +369,72 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
               </div>
             </div>
 
-            {/* Date & Time */}
-            <div>
-              <Label htmlFor="appointment_date">Date & Time *</Label>
-              <Input
-                id="appointment_date"
-                type="datetime-local"
-                value={data.appointment_date}
-                onChange={(e) => setData('appointment_date', e.target.value)}
-                className="mt-2 h-12"
-                required
-              />
-              <InputError message={errors.appointment_date} className="mt-1" />
+            {/* Date & Timeslot */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="date">Appointment Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={data.date}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  min={getMinDate()}
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  required
+                />
+                <InputError message={errors.date} className="mt-1" />
+              </div>
+
+              <div>
+                <Label htmlFor="time_id">Timeslot *</Label>
+                <select
+                  id="time_id" 
+                  value={data.time_id} 
+                  onChange={(e) => setData('time_id', e.target.value)}  
+                  className="w-full h-12 mt-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white"
+                  required
+                  disabled={!data.date}
+                >
+                  <option value="">
+                    {!data.date 
+                      ? 'Select Date First' 
+                      : availableTimeslotsCount === 0 
+                        ? 'No available timeslots' 
+                        : `Select Timeslot (${availableTimeslotsCount} available)`
+                    }
+                  </option>
+                  {filteredTimeslots.map(timeslot => {
+                    const isAvailable = isTimeslotAvailable(timeslot.id);
+                    return (
+                      <option 
+                        key={timeslot.id} 
+                        value={timeslot.id}
+                        disabled={!isAvailable}
+                        className={!isAvailable ? 'text-gray-400 bg-gray-100 dark:bg-gray-600 line-through' : ''}
+                      >
+                        {formatTime(timeslot.start_time)} - {formatTime(timeslot.end_time)}
+                        {timeslot.description && ` (${timeslot.description})`}
+                        {!isAvailable && ' - BOOKED'}
+                      </option>
+                    );
+                  })}
+                </select>
+                {data.date && (
+                  <div className="mt-1">
+                    {availableTimeslotsCount === 0 ? (
+                      <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                        ❌ All timeslots are booked for this date. Please select a different date.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        ✅ {availableTimeslotsCount} timeslot{availableTimeslotsCount !== 1 ? 's' : ''} available
+                        {bookedTimeSlots.size > 0 && ` • ${bookedTimeSlots.size} booked`}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <InputError message={errors.time_id} className="mt-1" />
+              </div>
             </div>
 
             {/* Status & Payment (Admin Only) */}
@@ -343,7 +527,7 @@ export default function Create({ users = [], pets, services, is_admin }: CreateP
             <div className="flex justify-end">
               <Button
                 type="submit"
-                disabled={processing || (!is_admin && filteredPets.length === 0)}
+                disabled={processing || (!is_admin && filteredPets.length === 0) || (!!data.date && availableTimeslotsCount === 0)}
                 className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50"
               >
                 {processing ? 'Creating...' : 'Create Appointment'}

@@ -14,14 +14,19 @@ class Appointment extends Model
         'user_id',
         'pet_id',
         'service_id',
-        'appointment_date',
         'status',
         'notes',
         'staff_remarks',    
         'payment_status',
     ];
 
-    // Relationships
+     // Add this relationship
+    public function schedule()
+    {
+        return $this->hasOne(Schedule::class);
+    }
+
+    // Keep your existing relationships
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -37,3 +42,6 @@ class Appointment extends Model
         return $this->belongsTo(Service::class);
     }
 }
+
+
+

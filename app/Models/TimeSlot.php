@@ -10,6 +10,7 @@ class TimeSlot extends Model
 {
     use HasFactory;
 
+    protected $table = 'time_slots'; 
     protected $fillable = [
         'start_time',
         'end_time',

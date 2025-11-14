@@ -9,66 +9,94 @@ import { can } from "@/lib/can";
 type User = { id: number; first_name: string; last_name: string };
 type Pet = { id: number; name: string };
 type Service = { id: number; name: string; price: number };
-type Appointment = {
+type TimeSlot = {
   id: number;
-  user_id: number;
-  pet_id: number;
-  service_id: number;
-  appointment_date: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
-  payment_status: "unpaid" | "paid" | "refunded";
-  notes: string | null;
-  staff_remarks: string | null;
-  service_fee: number | null;
-  user: User;
-  pet: Pet;
-  service: Service;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+  description?: string;
+};
+type Schedule = {
+  id: number;
+  date: string;
+  time_id: number;
+  status: string;
+  notes?: string;
+  timeslot: TimeSlot;
+  appointment: {
+    id: number;
+    user_id: number;
+    pet_id: number;
+    service_id: number;
+    status: "pending" | "confirmed" | "completed" | "cancelled";
+    payment_status: "unpaid" | "paid" | "refunded";
+    notes: string | null;
+    staff_remarks: string | null;
+    service_fee: number | null;
+    user: User;
+    pet: Pet;
+    service: Service;
+  };
 };
 
-type Props = { appointments: Appointment[] };
+type Props = { schedules: Schedule[] };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Appointments", href: "/appointments" }];
 
-export default function Index({ appointments }: Props) {
+// Format time function to handle ISO strings
+const formatTime = (timeString: string) => {
+  if (!timeString) return '--:--';
+  
+  try {
+    let timePart = timeString;
+    if (timeString.includes('T')) {
+      timePart = timeString.split('T')[1].split('.')[0];
+    }
+    return timePart.substring(0, 5); // Gets "09:00" format
+  } catch (error) {
+    return '--:--';
+  }
+};
+
+// Format date for display
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export default function Index({ schedules }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null);
 
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
-  const openDeleteModal = (appointment: Appointment) => {
-    setAppointmentToDelete(appointment);
+  const openDeleteModal = (schedule: Schedule) => {
+    setScheduleToDelete(schedule);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setAppointmentToDelete(null);
+    setScheduleToDelete(null);
     setDeletingId(null);
   };
 
   const confirmDelete = () => {
-    if (!appointmentToDelete) return;
-    setDeletingId(appointmentToDelete.id);
-    router.delete(route("appointments.destroy", appointmentToDelete.id), {
+    if (!scheduleToDelete) return;
+    setDeletingId(scheduleToDelete.appointment.id);
+    router.delete(route("appointments.destroy", scheduleToDelete.appointment.id), {
       preserveScroll: true,
       onSuccess: () => closeModal(),
       onError: () => {
         alert("Failed to delete appointment.");
         closeModal();
       },
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -91,17 +119,29 @@ export default function Index({ appointments }: Props) {
     }
   };
 
-  const filteredAppointments = useMemo(() => {
-    const term = search.toLowerCase();
-    const filtered = appointments.filter(
-      (a) =>
-        a.pet.name.toLowerCase().includes(term) ||
-        `${a.user.first_name} ${a.user.last_name}`.toLowerCase().includes(term)
+  const filteredSchedules = useMemo(() => {
+    // Filter out completed appointments
+    const activeSchedules = schedules.filter(schedule => 
+      schedule.appointment.status !== 'completed'
     );
+    
+    const term = search.toLowerCase();
+    const filtered = activeSchedules.filter(
+      (s) =>
+        s.appointment.pet.name.toLowerCase().includes(term) ||
+        `${s.appointment.user.first_name} ${s.appointment.user.last_name}`.toLowerCase().includes(term) ||
+        s.appointment.service.name.toLowerCase().includes(term)
+    );
+    
     return sortOrder === "desc"
-      ? [...filtered].sort((a, b) => b.id - a.id)
-      : [...filtered].sort((a, b) => a.id - b.id);
-  }, [appointments, search, sortOrder]);
+      ? [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      : [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [schedules, search, sortOrder]);
+
+  // Count completed appointments for informational display
+  const completedCount = schedules.filter(schedule => 
+    schedule.appointment.status === 'completed'
+  ).length;
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -131,9 +171,9 @@ export default function Index({ appointments }: Props) {
               <p className="mb-6 text-gray-600 dark:text-gray-300">
                 Permanently delete appointment for{" "}
                 <span className="font-semibold text-red-600">
-                  {appointmentToDelete?.pet.name}
+                  {scheduleToDelete?.appointment.pet.name}
                 </span>{" "}
-                ({appointmentToDelete?.user.first_name} {appointmentToDelete?.user.last_name})?
+                ({scheduleToDelete?.appointment.user.first_name} {scheduleToDelete?.appointment.user.last_name})?
                 This action <span className="underline">cannot be undone</span>.
               </p>
 
@@ -167,14 +207,26 @@ export default function Index({ appointments }: Props) {
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <motion.h1
-            className="text-3xl font-bold text-gray-900 dark:text-white"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            Appointments
-          </motion.h1>
+          <div>
+            <motion.h1
+              className="text-3xl font-bold text-gray-900 dark:text-white"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              Appointments
+            </motion.h1>
+            {completedCount > 0 && (
+              <motion.p
+                className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {completedCount} completed appointment{completedCount !== 1 ? 's' : ''} hidden from view
+              </motion.p>
+            )}
+          </div>
 
           {can("appointments.create") && (
             <Link href={route("appointments.create")}>
@@ -196,7 +248,7 @@ export default function Index({ appointments }: Props) {
         <div className="flex flex-col sm:flex-row gap-4">
           <motion.input
             type="text"
-            placeholder="Search by pet or owner..."
+            placeholder="Search by pet, owner, or service..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-80 h-12 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -245,7 +297,10 @@ export default function Index({ appointments }: Props) {
                     Service
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Date & Time
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                    Time
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
                     Status
@@ -260,51 +315,63 @@ export default function Index({ appointments }: Props) {
               </thead>
 
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!filteredAppointments.length ? (
+                {!filteredSchedules.length ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-16 text-gray-500 dark:text-gray-400 italic">
-                      No appointments found
+                    <td colSpan={9} className="text-center py-16 text-gray-500 dark:text-gray-400 italic">
+                      No active appointments found
                     </td>
                   </tr>
                 ) : (
-                  filteredAppointments.map((appointment, index) => (
+                  filteredSchedules.map((schedule, index) => (
                     <motion.tr
-                      key={appointment.id}
+                      key={schedule.id}
                       initial={{ opacity: 0, x: -30 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.35 + index * 0.03 }}
                       className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
                     >
                       <td className="px-6 py-4 font-medium text-gray-900 dark:text-white align-middle">
-                        #{appointment.id}
+                        #{schedule.appointment.id}
                       </td>
                       <td className="px-6 py-4 text-gray-800 dark:text-gray-200 align-middle">
-                        {appointment.user.first_name} {appointment.user.last_name}
+                        {schedule.appointment.user.first_name} {schedule.appointment.user.last_name}
                       </td>
                       <td className="px-6 py-4 font-semibold text-blue-700 dark:text-blue-300 align-middle">
-                        {appointment.pet.name}
+                        {schedule.appointment.pet.name}
                       </td>
                       <td className="px-6 py-4 align-middle">
-                        <div>{appointment.service.name}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">${appointment.service.price}</div>
+                        <div>{schedule.appointment.service.name}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">₱{schedule.appointment.service.price.toFixed(2)}</div>
                       </td>
                       <td className="px-6 py-4 text-sm align-middle">
-                        {formatDate(appointment.appointment_date)}
+                        {formatDate(schedule.date)}
+                      </td>
+                      <td className="px-6 py-4 text-sm align-middle">
+                        <div>
+                          <div className="font-medium">
+                            {formatTime(schedule.timeslot.start_time)} - {formatTime(schedule.timeslot.end_time)}
+                          </div>
+                          {schedule.timeslot.description && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {schedule.timeslot.description}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 align-middle">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(appointment.status)}`}>
-                          {appointment.status}
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(schedule.appointment.status)}`}>
+                          {schedule.appointment.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-middle">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(appointment.payment_status)}`}>
-                          {appointment.payment_status}
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(schedule.appointment.payment_status)}`}>
+                          {schedule.appointment.payment_status}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-middle">
                         <div className="flex items-center justify-center gap-2">
                           {can("appointments.view") && (
-                            <Link href={route("appointments.show", appointment.id)}>
+                            <Link href={route("appointments.show", schedule.appointment.id)}>
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -320,7 +387,7 @@ export default function Index({ appointments }: Props) {
                           )}
 
                           {can("appointments.edit") && (
-                            <Link href={route("appointments.edit", appointment.id)}>
+                            <Link href={route("appointments.edit", schedule.appointment.id)}>
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -336,7 +403,7 @@ export default function Index({ appointments }: Props) {
 
                           {can("appointments.delete") && (
                             <motion.button
-                              onClick={() => openDeleteModal(appointment)}
+                              onClick={() => openDeleteModal(schedule)}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
                               className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"

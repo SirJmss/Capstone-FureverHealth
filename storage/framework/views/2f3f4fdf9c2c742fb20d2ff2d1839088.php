@@ -126,8 +126,17 @@
             <div>Appointment ID:</div>
             <div>#<?php echo e($appointment->id); ?></div>
             
-            <div>Date & Time:</div>
-            <div><?php echo e(\Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y g:i A')); ?></div>
+            <div>Date:</div>
+            <div><?php echo e(\Carbon\Carbon::parse($appointment->schedule->date ?? $appointment->created_at)->format('F j, Y')); ?></div>
+            
+            <?php if($appointment->schedule && $appointment->schedule->timeslot): ?>
+            <div>Time:</div>
+            <div>
+                <?php echo e(\Carbon\Carbon::parse($appointment->schedule->timeslot->start_time)->format('g:i A')); ?> - 
+                <?php echo e(\Carbon\Carbon::parse($appointment->schedule->timeslot->end_time)->format('g:i A')); ?>
+
+            </div>
+            <?php endif; ?>
             
             <div>Status:</div>
             <div>
@@ -193,6 +202,13 @@
     <div class="section">
         <div class="section-title">CUSTOMER NOTES</div>
         <div style="font-size: 8px; line-height: 1.3;"><?php echo e($appointment->notes); ?></div>
+    </div>
+    <?php endif; ?>
+
+    <?php if($appointment->staff_remarks): ?>
+    <div class="section">
+        <div class="section-title">STAFF REMARKS</div>
+        <div style="font-size: 8px; line-height: 1.3;"><?php echo e($appointment->staff_remarks); ?></div>
     </div>
     <?php endif; ?>
 

@@ -6,33 +6,36 @@ use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Service;
+use App\Models\TimeSlot; // CHANGED: from Timeslot to TimeSlot
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AppointmentsController extends Controller
 {
     public function index()
-    {
-        // Allow both Admin and Staff to view all appointments
-        if (Auth::user()->hasRole(['Admin', 'Staff','Veterinarian', 'Pet Groomer'])) {
-            $appointments = Appointment::with(['user', 'pet', 'service'])
-                ->latest()
-                ->get();
-        } else {
-            // Regular users can only see their own appointments
-            $appointments = Appointment::with(['user', 'pet', 'service'])
-                ->where('user_id', Auth::id())
-                ->latest()
-                ->get();
-        }
-
-        return Inertia::render('Appointments/Index', [
-            'appointments' => $appointments,
-        ]);
+{
+    if (Auth::user()->hasRole(['Admin', 'Staff','Veterinarian', 'Pet Groomer'])) {
+        $schedules = Schedule::with(['appointment.user', 'appointment.pet', 'appointment.service', 'timeslot'])
+            ->latest()
+            ->get();
+    } else {
+        $schedules = Schedule::with(['appointment.user', 'appointment.pet', 'appointment.service', 'timeslot'])
+            ->whereHas('appointment', function($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->latest()
+            ->get();
     }
 
-    public function create()
+    return Inertia::render('Appointments/Index', [
+        'schedules' => $schedules,
+    ]);
+}
+
+   public function create()
 {
     $user = auth()->user();
     
@@ -46,10 +49,23 @@ class AppointmentsController extends Controller
         $pets = Pet::where('user_id', $user->id)->get();
     }
     
+    // Get existing schedules to prevent frontend double-booking
+    $existingSchedules = Schedule::where('date', '>=', now()->format('Y-m-d'))
+        ->whereHas('appointment', function($query) {
+            $query->whereIn('status', ['pending', 'confirmed']);
+        })
+        ->select('date', 'time_id')
+        ->get()
+        ->toArray();
+    
     $data = [
         'pets' => $pets,
         'services' => Service::select('id', 'name', 'price')->get(),
-        'is_admin' => $isAdminOrStaff, // This means user has Admin OR Staff role
+        'timeslots' => TimeSlot::where('is_active', true)
+            ->select('id', 'start_time', 'end_time', 'max_appointments', 'is_active', 'description')
+            ->get(),
+        'is_admin' => $isAdminOrStaff,
+        'existing_schedules' => $existingSchedules, // Pass existing schedules for frontend validation
     ];
     
     if ($isAdminOrStaff) {
@@ -69,13 +85,12 @@ class AppointmentsController extends Controller
             $request->merge(['user_id' => $user->id]);
         }
 
-        \Log::info('After admin check - user_id:', ['user_id' => $request->user_id]);
-        
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'pet_id' => 'required|exists:pets,id',
             'service_id' => 'required|exists:services,id',
-            'appointment_date' => 'required|date',
+            'date' => 'required|date|after_or_equal:today',
+            'time_id' => 'required|exists:time_slots,id', // CHANGED: from timeslots to time_slots
             'status' => 'required|in:pending,confirmed,completed,cancelled',
             'notes' => 'nullable|string',
             'staff_remarks' => 'nullable|string',
@@ -89,96 +104,221 @@ class AppointmentsController extends Controller
                 return back()->withErrors(['pet_id' => 'You can only create appointments for your own pets.']);
             }
         }
-        
-        Appointment::create($validated);
+
+        // Check if the timeslot is active
+        $timeslot = TimeSlot::findOrFail($validated['time_id']); // CHANGED: from Timeslot to TimeSlot
+        if (!$timeslot->is_active) {
+            return back()->withErrors(['time_id' => 'The selected timeslot is not available.']);
+        }
+
+        // Check for schedule conflicts (same date and timeslot)
+        $existingScheduleCount = Schedule::where('date', $validated['date'])
+            ->where('time_id', $validated['time_id'])
+            ->whereHas('appointment', function($query) {
+                $query->whereIn('status', ['pending', 'confirmed']);
+            })
+            ->count();
+
+        if ($existingScheduleCount >= $timeslot->max_appointments) {
+            return back()->withErrors(['time_id' => 'This timeslot is fully booked for the selected date.']);
+        }
+
+        // Use transaction to ensure both appointment and schedule are created
+        DB::transaction(function () use ($validated) {
+            // Create the appointment
+            $appointment = Appointment::create([
+                'user_id' => $validated['user_id'],
+                'pet_id' => $validated['pet_id'],
+                'service_id' => $validated['service_id'],
+                'status' => $validated['status'],
+                'payment_status' => $validated['payment_status'],
+                'notes' => $validated['notes'],
+                'staff_remarks' => $validated['staff_remarks'],
+            ]);
+
+            // Create the schedule entry
+            Schedule::create([
+                'appointment_id' => $appointment->id,
+                'time_id' => $validated['time_id'],
+                'date' => $validated['date'],
+                'status' => 'scheduled',
+                'notes' => $validated['notes'],
+            ]);
+        });
 
         return redirect()->route('appointments.index')
             ->with('success', 'Appointment created successfully!');
     }
 
     public function show($id)
-{
-    $appointment = Appointment::with(['pet', 'user', 'service.user'])->findOrFail($id);
-    $user = auth()->user();
-
-    return Inertia::render('Appointments/Show', [
-        'appointment' => $appointment,
-    ]);
-}
-    public function edit($id)
     {
-        $appointment = Appointment::findOrFail($id);
+        $appointment = Appointment::with(['pet', 'user', 'service.user'])->findOrFail($id);
         $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin');
 
-        // Authorization check
-        if (!$isAdmin && $appointment->user_id !== $user->id) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        // Get pets based on user role
-        if ($isAdmin) {
-            $pets = Pet::select('id', 'name', 'user_id')->get();
-        } else {
-            $pets = Pet::where('user_id', $user->id)->select('id', 'name', 'user_id')->get();
-        }
-
-        $data = [
+        return Inertia::render('Appointments/Show', [
             'appointment' => $appointment,
-            'pets' => $pets,
-            'services' => Service::select('id', 'name', 'price')->get(),
-            'is_admin' => $isAdmin,
-        ];
-
-        // Only load users if the current user is admin
-        if ($isAdmin) {
-            $data['users'] = User::select('id', 'first_name', 'last_name')->get();
-        }
-
-        return Inertia::render('Appointments/Edit', $data);
+        ]);
     }
 
-    public function update(Request $request, $id)
-    {
-        $appointment = Appointment::findOrFail($id);
-        $user = auth()->user();
-        $isAdmin = $user->hasRole('Admin');
+    public function edit($id)
+{
+    $appointment = Appointment::with(['schedule'])->findOrFail($id);
+    $user = auth()->user();
+    $isAdmin = $user->hasRole('Admin');
 
-        // If user is not admin, ensure they can only update their own appointments
-        if (!$isAdmin && $appointment->user_id !== $user->id) {
-            abort(403, 'Unauthorized action.');
+    // Authorization check
+    if (!$isAdmin && $appointment->user_id !== $user->id) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    // Get the schedule for this appointment
+    $schedule = Schedule::where('appointment_id', $appointment->id)->first();
+
+    // Get pets based on user role
+    if ($isAdmin) {
+        $pets = Pet::select('id', 'name', 'user_id')->get();
+    } else {
+        $pets = Pet::where('user_id', $user->id)->select('id', 'name', 'user_id')->get();
+    }
+
+    // Prepare appointment data with schedule information
+    $appointmentData = [
+        'id' => $appointment->id,
+        'user_id' => $appointment->user_id,
+        'pet_id' => $appointment->pet_id,
+        'service_id' => $appointment->service_id,
+        'date' => $schedule ? $schedule->date : null, // Make sure this is set
+        'time_id' => $schedule ? $schedule->time_id : null, // Make sure this is set
+        'status' => $appointment->status,
+        'notes' => $appointment->notes,
+        'staff_remarks' => $appointment->staff_remarks,
+        'payment_status' => $appointment->payment_status,
+        'schedule' => $schedule ? [
+            'date' => $schedule->date,
+            'time_id' => $schedule->time_id,
+        ] : null,
+    ];
+
+    // Debug: Log the data to check what's being sent
+    \Log::info('Appointment edit data:', $appointmentData);
+
+    $data = [
+        'appointment' => $appointmentData,
+        'pets' => $pets,
+        'services' => Service::select('id', 'name', 'price')->get(),
+        'timeslots' => TimeSlot::where('is_active', true)
+            ->select('id', 'start_time', 'end_time', 'max_appointments', 'is_active', 'description')
+            ->get(),
+        'is_admin' => $isAdmin,
+    ];
+
+    // Only load users if the current user is admin
+    if ($isAdmin) {
+        $data['users'] = User::select('id', 'first_name', 'last_name')->get();
+    }
+
+    return Inertia::render('Appointments/Edit', $data);
+}
+
+
+     public function update(Request $request, $id)
+{
+    $appointment = Appointment::findOrFail($id);
+    $user = auth()->user();
+    $isAdmin = $user->hasRole('Admin');
+
+    // If user is not admin, ensure they can only update their own appointments
+    if (!$isAdmin && $appointment->user_id !== $user->id) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    // If user is not admin, force the user_id to be the current user's ID
+    if (!$isAdmin) {
+        $request->merge(['user_id' => $user->id]);
+    }
+
+    $validated = $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'pet_id' => 'required|exists:pets,id',
+        'service_id' => 'required|exists:services,id',
+        'date' => 'required|date|after_or_equal:today',
+        'time_id' => 'required|exists:time_slots,id',
+        'status' => 'required|in:pending,confirmed,completed,cancelled',
+        'notes' => 'nullable|string',
+        'staff_remarks' => 'nullable|string',
+        'payment_status' => 'required|in:unpaid,paid,refunded',
+    ]);
+
+    // Additional security check for regular users
+    if (!$isAdmin) {
+        $pet = Pet::findOrFail($validated['pet_id']);
+        if ($pet->user_id !== $user->id) {
+            return back()->withErrors(['pet_id' => 'You can only update appointments for your own pets.']);
         }
+    }
 
-        // If user is not admin, force the user_id to be the current user's ID
-        if (!$isAdmin) {
-            $request->merge(['user_id' => $user->id]);
-        }
+    // Check if the timeslot is active
+    $timeslot = TimeSlot::findOrFail($validated['time_id']);
+    if (!$timeslot->is_active) {
+        return back()->withErrors(['time_id' => 'The selected timeslot is not available.']);
+    }
 
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'pet_id' => 'required|exists:pets,id',
-            'service_id' => 'required|exists:services,id',
-            'appointment_date' => 'required|date',
-            'status' => 'required|in:pending,confirmed,completed,cancelled',
-            'notes' => 'nullable|string',
-            'staff_remarks' => 'nullable|string',
-            'payment_status' => 'required|in:unpaid,paid,refunded',
+    // Check for schedule conflicts (excluding the current appointment)
+    $existingScheduleCount = Schedule::where('date', $validated['date'])
+        ->where('time_id', $validated['time_id'])
+        ->where('appointment_id', '!=', $id)
+        ->whereHas('appointment', function($query) {
+            $query->whereIn('status', ['pending', 'confirmed']);
+        })
+        ->count();
+
+    if ($existingScheduleCount >= $timeslot->max_appointments) {
+        return back()->withErrors(['time_id' => 'This timeslot is fully booked for the selected date.']);
+    }
+
+    // Use transaction to ensure data consistency
+    DB::transaction(function () use ($appointment, $validated) {
+        // Check if status is being changed to 'completed'
+        $isCompleting = $appointment->status !== 'completed' && $validated['status'] === 'completed';
+        
+        // Update the appointment
+        $appointment->update([
+            'user_id' => $validated['user_id'],
+            'pet_id' => $validated['pet_id'],
+            'service_id' => $validated['service_id'],
+            'status' => $validated['status'],
+            'payment_status' => $validated['payment_status'],
+            'notes' => $validated['notes'],
+            'staff_remarks' => $validated['staff_remarks'],
         ]);
 
-        // Additional security check for regular users
-        if (!$isAdmin) {
-            $pet = Pet::findOrFail($validated['pet_id']);
-            if ($pet->user_id !== $user->id) {
-                return back()->withErrors(['pet_id' => 'You can only update appointments for your own pets.']);
+        // If appointment is being marked as completed, delete the schedule
+        if ($isCompleting) {
+            Schedule::where('appointment_id', $appointment->id)->delete();
+        } else {
+            // Only update/create schedule if appointment is NOT completed
+            $schedule = Schedule::where('appointment_id', $appointment->id)->first();
+            if ($schedule) {
+                $schedule->update([
+                    'time_id' => $validated['time_id'],
+                    'date' => $validated['date'],
+                    'notes' => $validated['notes'],
+                ]);
+            } else {
+                Schedule::create([
+                    'appointment_id' => $appointment->id,
+                    'time_id' => $validated['time_id'],
+                    'date' => $validated['date'],
+                    'status' => 'scheduled',
+                    'notes' => $validated['notes'],
+                ]);
             }
         }
+    });
 
-        $appointment->update($validated);
-
-        return redirect()->route('appointments.index')
-            ->with('success', 'Appointment updated successfully!');
-    }
-
+    return redirect()->route('appointments.index')
+        ->with('success', 'Appointment updated successfully!');
+}
     public function destroy($id)
     {
         $appointment = Appointment::findOrFail($id);
@@ -190,9 +330,18 @@ class AppointmentsController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $appointment->delete();
+        // Use transaction to ensure both appointment and schedule are deleted
+        DB::transaction(function () use ($appointment) {
+            // Delete the schedule first
+            Schedule::where('appointment_id', $appointment->id)->delete();
+            // Then delete the appointment
+            $appointment->delete();
+        });
 
         return redirect()->route('appointments.index')
             ->with('success', 'Appointment deleted successfully!');
     }
+
+    // In your Appointment model
+
 }
