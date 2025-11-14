@@ -5,6 +5,19 @@ import { route } from 'ziggy-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { can } from '@/lib/can';
+import {
+  Search,
+  Plus,
+  PawPrint,
+  Calendar,
+  Edit,
+  Trash2,
+  Loader2,
+  Eye,
+  AlertCircle,
+  CheckCircle,
+  ArrowUpDown,
+} from 'lucide-react';
 
 type Pet = {
   id: number;
@@ -16,19 +29,16 @@ type Pet = {
   deleted_at: string | null;
 };
 
-type Props = {
-  pets: Pet[];
-};
+type Props = { pets: Pet[] };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Pets', href: '/pets' }];
 
-export default function Index({ pets }: Props) {
+export default function PetsIndex({ pets }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
-
-  const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const openDeleteModal = (pet: Pet) => {
     setPetToDelete(pet);
@@ -46,7 +56,7 @@ export default function Index({ pets }: Props) {
     setDeletingId(petToDelete.id);
     router.delete(route('pets.destroy', petToDelete.id), {
       preserveScroll: true,
-      onSuccess: () => closeModal(),
+      onSuccess: closeModal,
       onError: () => {
         alert('Failed to delete pet.');
         closeModal();
@@ -54,16 +64,15 @@ export default function Index({ pets }: Props) {
     });
   };
 
-  // Filter + Sort
   const filteredPets = useMemo(() => {
     const term = search.toLowerCase();
     const filtered = pets.filter(
-      (pet) =>
-        pet.name.toLowerCase().includes(term) ||
-        pet.species.toLowerCase().includes(term) ||
-        pet.breed.toLowerCase().includes(term)
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        p.species.toLowerCase().includes(term) ||
+        p.breed.toLowerCase().includes(term)
     );
-    return sortOrder === "desc"
+    return sortOrder === 'desc'
       ? [...filtered].sort((a, b) => b.id - a.id)
       : [...filtered].sort((a, b) => a.id - b.id);
   }, [pets, search, sortOrder]);
@@ -72,47 +81,57 @@ export default function Index({ pets }: Props) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Pets" />
 
-      {/* === DELETE MODAL === */}
+      {/* ────── DELETE MODAL ────── */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeModal}
           >
             <motion.div
-              className="w-full max-w-md rounded-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl p-6 shadow-2xl border border-white/20"
-              initial={{ scale: 0.9, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 30 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-xl border border-gray-100 dark:border-gray-700"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                Delete Pet
-              </h3>
-              <p className="mb-6 text-gray-600 dark:text-gray-300">
-                Permanently delete{' '}
-                <span className="font-semibold text-red-600">{petToDelete?.name}</span>? This action{' '}
-                <span className="underline">cannot be undone</span>.
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Delete Pet
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Permanently remove{' '}
+                <strong className="text-red-600">{petToDelete?.name}</strong>? This
+                action <strong>cannot be undone</strong>.
               </p>
-
               <div className="flex justify-end gap-3">
                 <button
                   onClick={closeModal}
-                  className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700"
                   disabled={deletingId !== null}
+                  className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
                   disabled={deletingId !== null}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-sm shadow-lg transition hover:from-red-600 hover:to-red-700 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium shadow-sm hover:bg-red-700 transition flex items-center gap-2"
                 >
-                  {deletingId ? 'Deleting...' : 'Delete Pet'}
+                  {deletingId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Pet'
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -120,238 +139,202 @@ export default function Index({ pets }: Props) {
         )}
       </AnimatePresence>
 
-      {/* === MAIN CONTENT === */}
-      <motion.div
-        className="p-6 space-y-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      {/* ────── MAIN CONTENT ────── mur */}
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <motion.h1
-            className="text-3xl font-bold text-gray-900 dark:text-white"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <PawPrint className="w-8 h-8 text-teal-600" />
             Pets Management
-          </motion.h1>
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
+            Manage all registered pets and their details.
+          </p>
+        </motion.div>
 
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, species, or breed..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+            />
+          </div>
+
+          {/* Sort */}
+          <button
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+          </button>
+
+          {/* Create – Desktop */}
           {can('pets.create') && (
-            <Link href={route('pets.create')}>
+            <Link href={route('pets.create')} className="hidden sm:block">
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow-lg transition-all hover:shadow-xl flex items-center gap-2"
+                className="px-5 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium shadow-md flex items-center gap-2 hover:shadow-lg transition"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="w-5 h-5" />
                 Create Pet
               </motion.button>
             </Link>
           )}
         </div>
 
-        {/* Search + Sort Controls */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <motion.input
-            type="text"
-            placeholder="Search by name, species, or breed..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-80 h-12 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          />
+        {/* FAB – Mobile */}
+        {can('pets.create') && (
+          <Link href={route('pets.create')} className="sm:hidden">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg flex items-center justify-center"
+            >
+              <Plus className="w-6 h-6" />
+            </motion.button>
+          </Link>
+        )}
 
-          <motion.button
-            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="h-12 px-5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
+        {/* ────── PETS GRID ────── */}
+        {filteredPets.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m2 0l4-4m0 0l-4-4m4 4H3" />
-            </svg>
-            {sortOrder === "desc" ? "Newest First" : "Oldest First"}
-          </motion.button>
-        </div>
+            <div className="w-32 h-32 mx-auto mb-5 bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-full flex items-center justify-center">
+              <PawPrint className="w-16 h-16 text-teal-600 dark:text-teal-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+              No pets found
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+              {search
+                ? 'Try adjusting your search.'
+                : 'Add your first pet to get started!'}
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPets.map((pet, idx) => {
+              const isActive = !pet.deleted_at;
+              const StatusIcon = isActive ? CheckCircle : AlertCircle;
+              const statusColor = isActive
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
 
-        {/* Table Card */}
-        <motion.div
-          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Species
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Breed
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Gender
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Age
-                  </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!filteredPets.length ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-16 text-gray-500 dark:text-gray-400 italic">
-                      <div className="flex flex-col items-center">
-                        <svg className="w-16 h-16 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14v7" />
-                        </svg>
-                        No pets found
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPets.map((pet, index) => (
-                    <motion.tr
-                      key={pet.id}
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.35 + index * 0.03 }}
-                      className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-all duration-200"
-                    >
-                      {/* ID */}
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white align-middle">
-                        #{pet.id}
-                      </td>
+              return (
+                <motion.div
+                  key={pet.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg line-clamp-1">
+                        {pet.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        ID: #{pet.id}
+                      </p>
+                    </div>
+                    <div className={`p-2 rounded-full ${statusColor}`}>
+                      <StatusIcon className="w-4 h-4" />
+                    </div>
+                  </div>
 
-                      {/* Name */}
-                      <td className="px-6 py-4 align-middle">
-                        <span className="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                          {pet.name}
-                        </span>
-                      </td>
+                  {/* Avatar */}
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                    {pet.name[0].toUpperCase()}
+                  </div>
 
-                      {/* Species */}
-                      <td className="px-6 py-4 align-middle">
-                        <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">
-                          {pet.species}
-                        </span>
-                      </td>
-
-                      {/* Breed */}
-                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-middle">
+                  {/* Details */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Species</span>
+                      <span className="font-medium text-purple-700 dark:text-purple-300">
+                        {pet.species}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Breed</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {pet.breed || '—'}
-                      </td>
-
-                      {/* Gender */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 align-middle">
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Gender</span>
+                      <span className="font-medium text-pink-600 dark:text-pink-400">
                         {pet.gender}
-                      </td>
-
-                      {/* Age */}
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 align-middle">
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Age</span>
+                      <span className="font-medium text-teal-600 dark:text-teal-400">
                         {pet.age}
-                      </td>
+                      </span>
+                    </div>
+                  </div>
 
-                      {/* Status */}
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex justify-center">
-                          <motion.span
-                            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
-                              !pet.deleted_at
-                                ? 'text-green-700 dark:text-green-300'
-                                : 'text-red-700 dark:text-red-300'
-                            }`}
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.1 + index * 0.03 }}
-                          >
-                            {!pet.deleted_at ? 'Active' : 'Deleted'}
-                          </motion.span>
-                        </div>
-                      </td>
+                  {/* Status Badge */}
+                  <div className="mt-4 flex justify-center">
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}
+                    >
+                      <StatusIcon className="w-3 h-3" />
+                      {isActive ? 'Active' : 'Deleted'}
+                    </span>
+                  </div>
 
-                      {/* Actions */}
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          {can('pets.view') && (
-                            <Link href={route('pets.show', pet.id)}>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                                title="View"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </motion.button>
-                            </Link>
-                          )}
-
-                          {can('pets.edit') && (
-                            <Link href={route('pets.edit', pet.id)}>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition"
-                                title="Edit"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </motion.button>
-                            </Link>
-                          )}
-
-                          {can('pets.delete') && !pet.deleted_at && (
-                            <motion.button
-                              onClick={() => openDeleteModal(pet)}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </motion.button>
-                          )}
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  {/* Actions */}
+                  <div className="mt-5 flex gap-2">
+                    {can('pets.view') && (
+                      <Link href={route('pets.show', pet.id)} className="flex-1">
+                        <button className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-1.5">
+                          <Eye className="w-4 h-4" />
+                          View
+                        </button>
+                      </Link>
+                    )}
+                    {can('pets.edit') && (
+                      <Link href={route('pets.edit', pet.id)} className="flex-1">
+                        <button className="w-full px-3 py-2 rounded-lg bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-sm font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition flex items-center justify-center gap-1.5">
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                      </Link>
+                    )}
+                    {can('pets.delete') && isActive && (
+                      <button
+                        onClick={() => openDeleteModal(pet)}
+                        className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-        </motion.div>
-      </motion.div>
+        )}
+      </div>
     </AppLayout>
   );
 }

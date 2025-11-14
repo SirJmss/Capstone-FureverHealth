@@ -4,11 +4,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
+import { PawPrint, ChevronLeft, Plus, Calendar, Scale, Stethoscope, AlertCircle, Scissors, Shield } from 'lucide-react';
+import InputError from '@/components/input-error';
 
-// Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Pets', href: '/pets' },
   { title: 'Create Pet', href: '' },
@@ -16,179 +15,172 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CreatePet() {
   const { data, setData, post, processing, errors, reset } = useForm({
-    name: "",
-    species: "",
-    breed: "",
-    gender: "male",
-    age: "",
-    weight: "",
-    medical_history: "",
-    allergies: "",
+    name: '',
+    species: '',
+    breed: '',
+    gender: 'male',
+    age: '',
+    weight: '',
+    medical_history: '',
+    allergies: '',
     vaccinated: false,
-    grooming_notes: "",
-    last_groomed_at: "",
+    grooming_notes: '',
+    last_groomed_at: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post(route('pets.store'), {
-      onSuccess: () => {
-        reset();
-      },
-    });
+    post(route('pets.store'), { onSuccess: () => reset() });
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Pet" />
 
-      <motion.div
-        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <motion.h1
-              className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              Create New Pet
-            </motion.h1>
+      {/* MAIN CONTENT */}
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
 
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <PawPrint className="w-8 h-8 text-teal-600" />
+                Create New Pet
+              </h1>
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
+                Add a new pet to the system
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Back Button - Mobile */}
+        <div className="sm:hidden mb-6">
+          <Link href={route('pets.index')}>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </motion.button>
+          </Link>
+        </div>
+
+        {/* CARD – COMPACT & BALANCED */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all max-w-4xl mx-auto"
+        >
+          {/* Back Button - Desktop */}
+          <div className="hidden sm:flex justify-end mb-4">
             <Link href={route('pets.index')}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back
-              </motion.div>
+                <ChevronLeft className="w-4 h-4" />
+                Back to Pets
+              </motion.button>
             </Link>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Name & Species */}
+            {/* Row 1: Name + Species */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Pet Name
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <PawPrint className="w-3.5 h-3.5" />
+                  Pet Name *
                 </Label>
                 <Input
                   id="name"
                   value={data.name}
-                  onChange={(e) => setData('name', e.target.value)}
+                  onChange={e => setData('name', e.target.value)}
                   placeholder="Buddy"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.name} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.name || ''} />
+              </div>
 
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="species" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Species
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Shield className="w-3.5 h-3.5" />
+                  Species *
                 </Label>
                 <Input
                   id="species"
                   value={data.species}
-                  onChange={(e) => setData('species', e.target.value)}
-                  placeholder="Dog / Cat / Rabbit"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={e => setData('species', e.target.value)}
+                  placeholder="Dog / Cat"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.species} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.species || ''} />
+              </div>
             </div>
 
-            {/* Breed & Gender */}
+            {/* Row 2: Breed + Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                <Label htmlFor="breed" className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <PawPrint className="w-3.5 h-3.5" />
                   Breed
                 </Label>
                 <Input
                   id="breed"
                   value={data.breed}
-                  onChange={(e) => setData('breed', e.target.value)}
+                  onChange={e => setData('breed', e.target.value)}
                   placeholder="Golden Retriever"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.breed} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.breed || ''} />
+              </div>
 
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.25 }}
-              >
-                <Label htmlFor="gender" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Gender
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <PawPrint className="w-3.5 h-3.5" />
+                  Gender *
                 </Label>
                 <select
                   id="gender"
                   value={data.gender}
-                  onChange={(e) => setData('gender', e.target.value)}
-                  className="w-full h-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 mt-2"
+                  onChange={e => setData('gender', e.target.value)}
+                  className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-sm text-gray-900 dark:text-white"
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                 </select>
-                <InputError message={errors.gender} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.gender || ''} />
+              </div>
             </div>
 
-            {/* Age & Weight */}
+            {/* Row 3: Age + Weight */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Label htmlFor="age" className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Calendar className="w-3.5 h-3.5" />
                   Age (years)
                 </Label>
                 <Input
                   id="age"
                   type="number"
                   value={data.age}
-                  onChange={(e) => setData('age', e.target.value)}
+                  onChange={e => setData('age', e.target.value)}
                   placeholder="3"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.age} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.age || ''} />
+              </div>
 
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Label htmlFor="weight" className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Scale className="w-3.5 h-3.5" />
                   Weight (kg)
                 </Label>
                 <Input
@@ -196,139 +188,114 @@ export default function CreatePet() {
                   type="number"
                   step="0.1"
                   value={data.weight}
-                  onChange={(e) => setData('weight', e.target.value)}
+                  onChange={e => setData('weight', e.target.value)}
                   placeholder="25.5"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.weight} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.weight || ''} />
+              </div>
             </div>
 
             {/* Vaccinated */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.35 }}
-              className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-            >
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800">
               <input
                 type="checkbox"
                 id="vaccinated"
                 checked={data.vaccinated}
-                onChange={(e) => setData('vaccinated', e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                onChange={e => setData('vaccinated', e.target.checked)}
+                className="w-4 h-4 text-teal-600 rounded focus:ring-2 focus:ring-teal-500"
               />
-              <Label htmlFor="vaccinated" className="text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
+              <Label htmlFor="vaccinated" className="text-sm font-medium cursor-pointer">
                 Vaccinated
               </Label>
-            </motion.div>
+            </div>
 
             {/* Medical History */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Label htmlFor="medical_history" className="text-gray-700 dark:text-gray-300 font-medium">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <Stethoscope className="w-3.5 h-3.5" />
                 Medical History
               </Label>
               <textarea
                 id="medical_history"
                 value={data.medical_history}
-                onChange={(e) => setData('medical_history', e.target.value)}
-                className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                placeholder="Any previous medical conditions or treatments..."
-                rows={3}
+                onChange={e => setData('medical_history', e.target.value)}
+                placeholder="Any previous conditions..."
+                className="w-full h-20 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2.5 text-sm resize-none"
+                rows={2}
               />
-              <InputError message={errors.medical_history} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.medical_history || ''} />
+            </div>
 
             {/* Allergies */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.45 }}
-            >
-              <Label htmlFor="allergies" className="text-gray-700 dark:text-gray-300 font-medium">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <AlertCircle className="w-3.5 h-3.5" />
                 Allergies
               </Label>
               <Input
                 id="allergies"
                 value={data.allergies}
-                onChange={(e) => setData('allergies', e.target.value)}
-                placeholder="List any known allergies..."
-                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={e => setData('allergies', e.target.value)}
+                placeholder="e.g. peanuts, pollen"
+                className="h-11 rounded-lg text-sm"
               />
-              <InputError message={errors.allergies} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.allergies || ''} />
+            </div>
 
             {/* Grooming Notes */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Label htmlFor="grooming_notes" className="text-gray-700 dark:text-gray-300 font-medium">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <Scissors className="w-3.5 h-3.5" />
                 Grooming Notes
               </Label>
               <textarea
                 id="grooming_notes"
                 value={data.grooming_notes}
-                onChange={(e) => setData('grooming_notes', e.target.value)}
-                className="w-full h-24 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 mt-2 resize-none"
-                placeholder="Special grooming instructions or preferences..."
-                rows={3}
+                onChange={e => setData('grooming_notes', e.target.value)}
+                placeholder="Special instructions..."
+                className="w-full h-20 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2.5 text-sm resize-none"
+                rows={2}
               />
-              <InputError message={errors.grooming_notes} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.grooming_notes || ''} />
+            </div>
 
             {/* Last Groomed At */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.55 }}
-            >
-              <Label htmlFor="last_groomed_at" className="text-gray-700 dark:text-gray-300 font-medium">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <Calendar className="w-3.5 h-3.5" />
                 Last Groomed At
               </Label>
               <Input
                 id="last_groomed_at"
                 type="date"
                 value={data.last_groomed_at}
-                onChange={(e) => setData('last_groomed_at', e.target.value)}
-                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={e => setData('last_groomed_at', e.target.value)}
+                className="h-11 rounded-lg text-sm"
               />
-              <InputError message={errors.last_groomed_at} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.last_groomed_at || ''} />
+            </div>
 
             {/* Submit */}
-            <motion.div
-              className="pt-6"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <Button
+            <div className="flex justify-end pt-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={processing}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold text-lg shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
+                className="px-7 py-2.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium shadow-md flex items-center gap-2 hover:shadow-lg transition disabled:opacity-50 text-sm"
               >
-                {processing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Creating...
-                  </span>
-                ) : (
-                  'Create Pet'
+                {processing ? 'Creating...' : (
+                  <>
+                    <Plus className="w-4.5 h-4.5" />
+                    Create Pet
+                  </>
                 )}
-              </Button>
-            </motion.div>
+              </motion.button>
+            </div>
           </form>
         </motion.div>
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

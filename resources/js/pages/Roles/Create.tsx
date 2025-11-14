@@ -4,23 +4,23 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
+import { Shield, ChevronLeft, Plus, Check, AlertCircle } from 'lucide-react';
+import InputError from '@/components/input-error';
 
 // === COLOR PALETTE ===
 const colors = [
-  'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
-  'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800',
-  'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
-  'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
-  'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800',
-  'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
-  'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800',
-  'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
+  'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+  'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
+  'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+  'bg-pink-100 text-pink-700 dark:bg-pink-900/20 dark:text-pink-400',
+  'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
 ] as const;
 
-// === HASH FUNCTION FOR CONSISTENT COLOR ===
+// === HASH FUNCTION ===
 const getColorClass = (str: string) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -51,7 +51,7 @@ export default function Create({ permissions = [] }: CreateProps) {
 
   const togglePermission = (perm: string) => {
     const updated = data.permissions.includes(perm)
-      ? data.permissions.filter((p) => p !== perm)
+      ? data.permissions.filter(p => p !== perm)
       : [...data.permissions, perm];
     setData('permissions', updated);
   };
@@ -60,84 +60,92 @@ export default function Create({ permissions = [] }: CreateProps) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Role" />
 
-      <motion.div
-        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+      {/* MAIN CONTENT */}
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Shield className="w-8 h-8 text-teal-600" />
                 Create New Role
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
                 Define role name and assign permissions
               </p>
-            </motion.div>
+            </div>
+          </div>
+        </motion.div>
 
+        {/* Back Button - Mobile */}
+        <div className="sm:hidden mb-6">
+          <Link href={route('roles.index')}>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </motion.button>
+          </Link>
+        </div>
+
+        {/* CARD – COMPACT & BALANCED */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all max-w-4xl mx-auto"
+        >
+          {/* Back Button - Desktop */}
+          <div className="hidden sm:flex justify-end mb-4">
             <Link href={route('roles.index')}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <ChevronLeft className="w-4 h-4" />
                 Back to Roles
-              </motion.div>
+              </motion.button>
             </Link>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+
             {/* Role Name */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300 font-medium">
-                Role Name
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <Shield className="w-3.5 h-3.5" />
+                Role Name *
               </Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="e.g., Vet, Receptionist, Admin"
-                required
+                placeholder="e.g. Vet, Receptionist"
                 value={data.name}
-                onChange={(e) => setData('name', e.target.value)}
-                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={e => setData('name', e.target.value)}
+                className="h-11 rounded-lg text-sm"
+                required
               />
-              <InputError message={errors.name} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.name || ''} />
+            </div>
 
             {/* Permissions */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Label className="text-gray-700 dark:text-gray-300 font-medium mb-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Assign Permissions
               </Label>
 
               {permissions.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                  No permissions available.
-                </p>
+                <div className="text-center py-8">
+                  <AlertCircle className="w-10 h-10 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No permissions available.
+                  </p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {permissions.map((perm, i) => {
@@ -147,69 +155,55 @@ export default function Create({ permissions = [] }: CreateProps) {
                     return (
                       <motion.label
                         key={perm}
-                        className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 select-none
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all text-xs font-medium
                           ${isSelected
-                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md ring-2 ring-blue-200 dark:ring-blue-800'
-                            : `border-transparent ${colorClass} hover:ring-2 hover:ring-current`
+                            ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 shadow-sm'
+                            : `border-gray-200 dark:border-gray-600 ${colorClass} hover:shadow-sm`
                           }`}
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 + i * 0.03 }}
-                        whileHover={{ scale: 1.03 }}
+                        transition={{ delay: 0.2 + i * 0.02 }}
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <input
                           type="checkbox"
-                          value={perm}
                           checked={isSelected}
                           onChange={() => togglePermission(perm)}
-                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          className="w-4 h-4 text-teal-600 rounded focus:ring-2 focus:ring-teal-500"
                         />
-                        <span
-                          className={`text-sm font-medium truncate px-3 py-1.5 rounded-full transition-all
-                            ${isSelected
-                              ? 'bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300'
-                              : colorClass
-                            }`}
-                        >
+                        <span className="truncate">
                           {perm.replace(/\./g, ' · ')}
                         </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-teal-600 ml-auto" />}
                       </motion.label>
                     );
                   })}
                 </div>
               )}
-              <InputError message={errors.permissions} className="mt-2" />
-            </motion.div>
+              <InputError message={errors.permissions || ''} />
+            </div>
 
             {/* Submit */}
-            <motion.div
-              className="pt-6 flex justify-end"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Button
+            <div className="flex justify-end pt-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={processing}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+                className="px-7 py-2.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium shadow-md flex items-center gap-2 hover:shadow-lg transition disabled:opacity-50 text-sm"
               >
-                {processing ? (
+                {processing ? 'Creating...' : (
                   <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Creating...
+                    <Plus className="w-4.5 h-4.5" />
+                    Create Role
                   </>
-                ) : (
-                  'Create Role'
                 )}
-              </Button>
-            </motion.div>
+              </motion.button>
+            </div>
           </form>
         </motion.div>
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

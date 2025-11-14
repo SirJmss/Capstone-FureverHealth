@@ -4,12 +4,12 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import InputError from '@/components/input-error';
 import { motion } from 'framer-motion';
+import InputError from '@/components/input-error';
+import { User, Mail, Phone, MapPin, Shield, ChevronLeft, Save, Check } from 'lucide-react';
 
 /* -------------------------------------------------
-   COLOR PALETTE + HASH FUNCTION (from Show.tsx)
+   COLOR PALETTE + HASH FUNCTION
 ------------------------------------------------- */
 const colors = [
   'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
@@ -78,7 +78,7 @@ export default function Edit({ user, allRoles }: Props) {
 
   const toggleRole = (roleName: string) => {
     if (data.roles.includes(roleName)) {
-      setData('roles', data.roles.filter((r) => r !== roleName));
+      setData('roles', data.roles.filter(r => r !== roleName));
     } else {
       setData('roles', [...data.roles, roleName]);
     }
@@ -86,175 +86,171 @@ export default function Edit({ user, allRoles }: Props) {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title={`Edit – ${user.first_name} ${user.last_name}`} />
+      <Head title={`Edit: ${user.first_name} ${user.last_name}`} />
 
-      <motion.div
-        className="p-4 md:p-6 flex items-center justify-center min-h-[80vh]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          className="w-full max-w-4xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 md:p-10"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <User className="w-8 h-8 text-teal-600" />
                 Edit User
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {user.first_name} {user.last_name} • #{user.id}
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
+                {user.first_name} {user.last_name} • ID: #{user.id}
               </p>
-            </motion.div>
+            </div>
+          </div>
+        </motion.div>
 
+        {/* Back Button - Mobile */}
+        <div className="sm:hidden mb-6">
+          <Link href={route('users.index')}>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </motion.button>
+          </Link>
+        </div>
+
+        {/* CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all max-w-4xl mx-auto"
+        >
+          {/* Back Button - Desktop */}
+          <div className="hidden sm:flex justify-end mb-4">
             <Link href={route('users.index')}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <ChevronLeft className="w-4 h-4" />
                 Back to Users
-              </motion.div>
+              </motion.button>
             </Link>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+
             {/* Name Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="first_name" className="text-gray-700 dark:text-gray-300 font-medium">
-                  First Name
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <User className="w-3.5 h-3.5" />
+                  First Name *
                 </Label>
                 <Input
-                  id="first_name"
                   value={data.first_name}
-                  onChange={(e) => setData('first_name', e.target.value)}
+                  onChange={e => setData('first_name', e.target.value)}
                   placeholder="John"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
+                  required
                 />
-                <InputError message={errors.first_name} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.first_name || ''} />
+              </div>
 
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Label htmlFor="last_name" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Last Name
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  Last Name *
                 </Label>
                 <Input
-                  id="last_name"
                   value={data.last_name}
-                  onChange={(e) => setData('last_name', e.target.value)}
+                  onChange={e => setData('last_name', e.target.value)}
                   placeholder="Doe"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
+                  required
                 />
-                <InputError message={errors.last_name} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.last_name || ''} />
+              </div>
             </div>
 
             {/* Email & Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Email Address
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Mail className="w-3.5 h-3.5" />
+                  Email *
                 </Label>
                 <Input
-                  id="email"
                   type="email"
                   value={data.email}
-                  onChange={(e) => setData('email', e.target.value)}
+                  onChange={e => setData('email', e.target.value)}
                   placeholder="john@example.com"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
+                  required
                 />
-                <InputError message={errors.email} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.email || ''} />
+              </div>
 
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.35 }}
-              >
-                <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300 font-medium">
-                  Phone Number
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Phone className="w-3.5 h-3.5" />
+                  Phone
                 </Label>
                 <Input
-                  id="phone"
                   value={data.phone}
-                  onChange={(e) => setData('phone', e.target.value)}
+                  onChange={e => setData('phone', e.target.value)}
                   placeholder="+1 234 567 890"
-                  className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="h-11 rounded-lg text-sm"
                 />
-                <InputError message={errors.phone} className="mt-1" />
-              </motion.div>
+                <InputError message={errors.phone || ''} />
+              </div>
             </div>
 
             {/* Address */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Label htmlFor="address" className="text-gray-700 dark:text-gray-300 font-medium">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <MapPin className="w-3.5 h-3.5" />
                 Address
               </Label>
               <Input
-                id="address"
                 value={data.address}
-                onChange={(e) => setData('address', e.target.value)}
+                onChange={e => setData('address', e.target.value)}
                 placeholder="123 Main St, City, Country"
-                className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="h-11 rounded-lg text-sm"
               />
-              <InputError message={errors.address} className="mt-1" />
-            </motion.div>
+              <InputError message={errors.address || ''} />
+            </div>
 
             {/* Roles – Colored Tags */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.45 }}
-            >
-              <Label className="text-gray-700 dark:text-gray-300 font-medium mb-3">Assign Roles</Label>
-              <div className="flex flex-wrap gap-3">
-                {allRoles.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">No roles available.</p>
-                ) : (
-                  allRoles.map((role, i) => {
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1 text-sm">
+                <Shield className="w-3.5 h-3.5" />
+                Assign Roles
+              </Label>
+
+              {allRoles.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                  No roles available.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allRoles.map((role, i) => {
                     const isActive = data.roles.includes(role.name);
                     const color = getColorClass(role.name);
+
                     return (
                       <motion.label
                         key={role.id}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border-2 transition-all cursor-pointer ${
-                          isActive
-                            ? `${color} ring-2 ring-offset-2 ring-current`
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none
+                          ${isActive
+                            ? `${color} ring-1 ring-current shadow-sm`
                             : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                        }`}
-                        initial={{ opacity: 0, scale: 0.9 }}
+                          }`}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.5 + i * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
+                        transition={{ delay: 0.05 + i * 0.02 }}
+                        whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <input
@@ -263,43 +259,36 @@ export default function Edit({ user, allRoles }: Props) {
                           onChange={() => toggleRole(role.name)}
                           className="sr-only"
                         />
+                        <Check className={`w-3.5 h-3.5 ${isActive ? 'block' : 'hidden'}`} />
                         <span className="capitalize">{role.name.replace(/_/g, ' ')}</span>
                       </motion.label>
                     );
-                  })
-                )}
-              </div>
-              <InputError message={errors.roles} className="mt-2" />
-            </motion.div>
+                  })}
+                </div>
+              )}
+              <InputError message={errors.roles || ''} />
+            </div>
 
             {/* Submit */}
-            <motion.div
-              className="pt-6 flex justify-end"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <Button
+            <div className="flex justify-end pt-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={processing}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-base shadow-lg transition-all hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+                className="px-7 py-2.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium shadow-md flex items-center gap-2 hover:shadow-lg transition disabled:opacity-50 text-sm"
               >
-                {processing ? (
+                {processing ? 'Updating...' : (
                   <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Updating...
+                    <Save className="w-4.5 h-4.5" />
+                    Update User
                   </>
-                ) : (
-                  'Update User'
                 )}
-              </Button>
-            </motion.div>
+              </motion.button>
+            </div>
           </form>
         </motion.div>
-      </motion.div>
+      </div>
     </AppLayout>
   );
 }

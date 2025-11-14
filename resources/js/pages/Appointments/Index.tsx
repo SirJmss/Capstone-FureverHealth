@@ -1,10 +1,15 @@
-import AppLayout from "@/layouts/app-layout";
-import { type BreadcrumbItem } from "@/types";
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { route } from "ziggy-js";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo } from "react";
-import { can } from "@/lib/can";
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import { route } from 'ziggy-js';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { can } from '@/lib/can';
+import {
+  Search, Plus, Calendar, Clock, User, PawPrint, DollarSign,
+  AlertCircle, CheckCircle, XCircle, Trash2, Eye, Edit, Loader2,
+  ArrowUpDown, Info
+} from 'lucide-react';
 
 type User = { id: number; first_name: string; last_name: string };
 type Pet = { id: number; name: string };
@@ -28,8 +33,8 @@ type Schedule = {
     user_id: number;
     pet_id: number;
     service_id: number;
-    status: "pending" | "confirmed" | "completed" | "cancelled";
-    payment_status: "unpaid" | "paid" | "refunded";
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+    payment_status: 'unpaid' | 'paid' | 'refunded';
     notes: string | null;
     staff_remarks: string | null;
     service_fee: number | null;
@@ -41,40 +46,29 @@ type Schedule = {
 
 type Props = { schedules: Schedule[] };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: "Appointments", href: "/appointments" }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Appointments', href: '/appointments' }];
 
-// Format time function to handle ISO strings
 const formatTime = (timeString: string) => {
   if (!timeString) return '--:--';
-  
   try {
-    let timePart = timeString;
-    if (timeString.includes('T')) {
-      timePart = timeString.split('T')[1].split('.')[0];
-    }
-    return timePart.substring(0, 5); // Gets "09:00" format
-  } catch (error) {
+    const timePart = timeString.includes('T') ? timeString.split('T')[1].split('.')[0] : timeString;
+    return timePart.substring(0, 5);
+  } catch {
     return '--:--';
   }
 };
 
-// Format date for display
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-export default function Index({ schedules }: Props) {
+export default function AppointmentsIndex({ schedules }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null);
-
-  const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const openDeleteModal = (schedule: Schedule) => {
     setScheduleToDelete(schedule);
@@ -90,107 +84,107 @@ export default function Index({ schedules }: Props) {
   const confirmDelete = () => {
     if (!scheduleToDelete) return;
     setDeletingId(scheduleToDelete.appointment.id);
-    router.delete(route("appointments.destroy", scheduleToDelete.appointment.id), {
+    router.delete(route('appointments.destroy', scheduleToDelete.appointment.id), {
       preserveScroll: true,
       onSuccess: () => closeModal(),
       onError: () => {
-        alert("Failed to delete appointment.");
+        alert('Failed to delete appointment.');
         closeModal();
       },
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case "pending": return "text-yellow-600 dark:text-yellow-400";
-      case "confirmed": return "text-blue-600 dark:text-blue-400";
-      case "completed": return "text-green-600 dark:text-green-400";
-      case "cancelled": return "text-red-600 dark:text-red-400";
-      default: return "text-gray-600 dark:text-gray-400";
+      case 'pending': return { icon: AlertCircle, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Pending' };
+      case 'confirmed': return { icon: CheckCircle, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', label: 'Confirmed' };
+      case 'completed': return { icon: CheckCircle, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', label: 'Completed' };
+      case 'cancelled': return { icon: XCircle, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', label: 'Cancelled' };
+      default: return { icon: Info, color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300', label: status };
     }
   };
 
-  const getPaymentStatusColor = (status: string) => {
+  const getPaymentConfig = (status: string) => {
     switch (status) {
-      case "paid": return "text-green-600 dark:text-green-400";
-      case "unpaid": return "text-red-600 dark:text-red-400";
-      case "refunded": return "text-purple-600 dark:text-purple-400";
-      default: return "text-gray-600 dark:text-gray-400";
+      case 'paid': return { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', label: 'Paid' };
+      case 'unpaid': return { color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', label: 'Unpaid' };
+      case 'refunded': return { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', label: 'Refunded' };
+      default: return { color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300', label: status };
     }
   };
 
   const filteredSchedules = useMemo(() => {
-    // Filter out completed appointments
-    const activeSchedules = schedules.filter(schedule => 
-      schedule.appointment.status !== 'completed'
-    );
-    
+    const active = schedules.filter(s => s.appointment.status !== 'completed');
     const term = search.toLowerCase();
-    const filtered = activeSchedules.filter(
-      (s) =>
-        s.appointment.pet.name.toLowerCase().includes(term) ||
-        `${s.appointment.user.first_name} ${s.appointment.user.last_name}`.toLowerCase().includes(term) ||
-        s.appointment.service.name.toLowerCase().includes(term)
+    const filtered = active.filter(s =>
+      s.appointment.pet.name.toLowerCase().includes(term) ||
+      `${s.appointment.user.first_name} ${s.appointment.user.last_name}`.toLowerCase().includes(term) ||
+      s.appointment.service.name.toLowerCase().includes(term)
     );
-    
-    return sortOrder === "desc"
+    return sortOrder === 'desc'
       ? [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       : [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [schedules, search, sortOrder]);
 
-  // Count completed appointments for informational display
-  const completedCount = schedules.filter(schedule => 
-    schedule.appointment.status === 'completed'
-  ).length;
+  const completedCount = schedules.filter(s => s.appointment.status === 'completed').length;
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Appointments" />
 
-      {/* === DELETE MODAL === */}
+      {/* ==================== DELETE MODAL ==================== */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeModal}
           >
             <motion.div
-              className="w-full max-w-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6"
-              initial={{ scale: 0.9, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 30 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-xl border border-gray-100 dark:border-gray-700"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                Delete Appointment
-              </h3>
-              <p className="mb-6 text-gray-600 dark:text-gray-300">
-                Permanently delete appointment for{" "}
-                <span className="font-semibold text-red-600">
-                  {scheduleToDelete?.appointment.pet.name}
-                </span>{" "}
-                ({scheduleToDelete?.appointment.user.first_name} {scheduleToDelete?.appointment.user.last_name})?
-                This action <span className="underline">cannot be undone</span>.
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Delete Appointment
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Permanently remove appointment for{' '}
+                <strong className="text-red-600">{scheduleToDelete?.appointment.pet.name}</strong>
+                {' '}with{' '}
+                <strong>{scheduleToDelete?.appointment.user.first_name} {scheduleToDelete?.appointment.user.last_name}</strong>?
+                This action <strong>cannot be undone</strong>.
               </p>
-
               <div className="flex justify-end gap-3">
                 <button
                   onClick={closeModal}
-                  className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700"
                   disabled={deletingId !== null}
+                  className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
                   disabled={deletingId !== null}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-sm shadow-lg transition hover:from-red-600 hover:to-red-700 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium shadow-sm hover:bg-red-700 transition flex items-center gap-2"
                 >
-                  {deletingId ? "Deleting..." : "Delete Appointment"}
+                  {deletingId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Appointment'
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -198,232 +192,210 @@ export default function Index({ schedules }: Props) {
         )}
       </AnimatePresence>
 
-      {/* === MAIN CONTENT === */}
-      <motion.div
-        className="p-6 space-y-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      {/* ==================== MAIN CONTENT ==================== */}
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <motion.h1
-              className="text-3xl font-bold text-gray-900 dark:text-white"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              Appointments
-            </motion.h1>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Calendar className="w-8 h-8 text-teal-600" />
+                Appointments
+              </h1>
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
+                Manage upcoming pet care appointments.
+              </p>
+            </div>
             {completedCount > 0 && (
-              <motion.p
-                className="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                {completedCount} completed appointment{completedCount !== 1 ? 's' : ''} hidden from view
-              </motion.p>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                <Info className="w-3.5 h-3.5" />
+                {completedCount} completed hidden
+              </div>
             )}
           </div>
+        </motion.div>
 
-          {can("appointments.create") && (
-            <Link href={route("appointments.create")}>
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search pet, owner, or service..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+            />
+          </div>
+
+          {/* Sort */}
+          <button
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center gap-2"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+          </button>
+
+          {/* Create Button - Desktop */}
+          {can('appointments.create') && (
+            <Link href={route('appointments.create')} className="hidden sm:block">
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm shadow-lg transition-all hover:shadow-xl flex items-center gap-2"
+                className="px-5 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium shadow-md flex items-center gap-2 hover:shadow-lg transition"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="w-5 h-5" />
                 Create Appointment
               </motion.button>
             </Link>
           )}
         </div>
 
-        {/* Search + Sort */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <motion.input
-            type="text"
-            placeholder="Search by pet, owner, or service..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-80 h-12 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          />
+        {/* FAB - Mobile */}
+        {can('appointments.create') && (
+          <Link href={route('appointments.create')} className="sm:hidden">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg flex items-center justify-center"
+            >
+              <Plus className="w-6 h-6" />
+            </motion.button>
+          </Link>
+        )}
 
-          <motion.button
-            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="h-12 px-5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium text-sm transition hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
+        {/* ==================== APPOINTMENTS GRID ==================== */}
+        {filteredSchedules.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m2 0l4-4m0 0l-4-4m4 4H3" />
-            </svg>
-            {sortOrder === "desc" ? "Newest First" : "Oldest First"}
-          </motion.button>
-        </div>
+            <div className="w-32 h-32 mx-auto mb-5 bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-full flex items-center justify-center">
+              <PawPrint className="w-16 h-16 text-teal-600 dark:text-teal-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+              No active appointments
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+              All caught up! Create a new appointment or adjust your search.
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSchedules.map((schedule, idx) => {
+              const status = getStatusConfig(schedule.appointment.status);
+              const payment = getPaymentConfig(schedule.appointment.payment_status);
+              const StatusIcon = status.icon;
 
-        {/* Table Card */}
-        <motion.div
-          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Pet
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Service
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Payment
-                  </th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+              return (
+                <motion.div
+                  key={schedule.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                          {schedule.appointment.pet.name}
+                        </h3>
+                        <PawPrint className="w-4 h-4 text-teal-600" />
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        ID: #{schedule.appointment.id}
+                      </p>
+                    </div>
+                    <div className={`p-2 rounded-full ${status.color}`}>
+                      <StatusIcon className="w-4 h-4" />
+                    </div>
+                  </div>
 
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!filteredSchedules.length ? (
-                  <tr>
-                    <td colSpan={9} className="text-center py-16 text-gray-500 dark:text-gray-400 italic">
-                      No active appointments found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredSchedules.map((schedule, index) => (
-                    <motion.tr
-                      key={schedule.id}
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.35 + index * 0.03 }}
-                      className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white align-middle">
-                        #{schedule.appointment.id}
-                      </td>
-                      <td className="px-6 py-4 text-gray-800 dark:text-gray-200 align-middle">
+                  {/* Customer */}
+                  <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                      {schedule.appointment.user.first_name[0]}{schedule.appointment.user.last_name[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {schedule.appointment.user.first_name} {schedule.appointment.user.last_name}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-blue-700 dark:text-blue-300 align-middle">
-                        {schedule.appointment.pet.name}
-                      </td>
-                      <td className="px-6 py-4 align-middle">
-                        <div>{schedule.appointment.service.name}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">₱{schedule.appointment.service.price.toFixed(2)}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm align-middle">
-                        {formatDate(schedule.date)}
-                      </td>
-                      <td className="px-6 py-4 text-sm align-middle">
-                        <div>
-                          <div className="font-medium">
-                            {formatTime(schedule.timeslot.start_time)} - {formatTime(schedule.timeslot.end_time)}
-                          </div>
-                          {schedule.timeslot.description && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {schedule.timeslot.description}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 align-middle">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(schedule.appointment.status)}`}>
-                          {schedule.appointment.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 align-middle">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(schedule.appointment.payment_status)}`}>
-                          {schedule.appointment.payment_status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex items-center justify-center gap-2">
-                          {can("appointments.view") && (
-                            <Link href={route("appointments.show", schedule.appointment.id)}>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                                title="View"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </motion.button>
-                            </Link>
-                          )}
+                      </p>
+                    </div>
+                  </div>
 
-                          {can("appointments.edit") && (
-                            <Link href={route("appointments.edit", schedule.appointment.id)}>
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition"
-                                title="Edit"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </motion.button>
-                            </Link>
-                          )}
+                  {/* Service & Price */}
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {schedule.appointment.service.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ₱{schedule.appointment.service.price.toFixed(2)}
+                    </p>
+                  </div>
 
-                          {can("appointments.delete") && (
-                            <motion.button
-                              onClick={() => openDeleteModal(schedule)}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="p-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </motion.button>
-                          )}
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  {/* Date & Time */}
+                  <div className="flex items-center gap-4 mb-4 text-sm">
+                    <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                      <Calendar className="w-4 h-4" />
+                      {formatDate(schedule.date)}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                      <Clock className="w-4 h-4" />
+                      {formatTime(schedule.timeslot.start_time)} - {formatTime(schedule.timeslot.end_time)}
+                    </div>
+                  </div>
+
+                  {/* Status Badges */}
+                  <div className="flex gap-2 mb-4">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                      <StatusIcon className="w-3 h-3" />
+                      {status.label}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${payment.color}`}>
+                      <DollarSign className="w-3 h-3" />
+                      {payment.label}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    {can('appointments.view') && (
+                      <Link href={route('appointments.show', schedule.appointment.id)} className="flex-1">
+                        <button className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-1.5">
+                          <Eye className="w-4 h-4" />
+                          View
+                        </button>
+                      </Link>
+                    )}
+                    {can('appointments.edit') && (
+                      <Link href={route('appointments.edit', schedule.appointment.id)} className="flex-1">
+                        <button className="w-full px-3 py-2 rounded-lg bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-sm font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition flex items-center justify-center gap-1.5">
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
+                      </Link>
+                    )}
+                    {can('appointments.delete') && (
+                      <button
+                        onClick={() => openDeleteModal(schedule)}
+                        className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-        </motion.div>
-      </motion.div>
+        )}
+      </div>
     </AppLayout>
   );
 }
