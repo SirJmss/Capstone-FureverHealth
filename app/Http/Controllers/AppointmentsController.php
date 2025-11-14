@@ -35,7 +35,7 @@ class AppointmentsController extends Controller
     ]);
 }
 
-   public function create()
+  public function create()
 {
     $user = auth()->user();
     
@@ -50,8 +50,10 @@ class AppointmentsController extends Controller
     }
     
     // Get existing schedules to prevent frontend double-booking
+    // ONLY include schedules with pending or confirmed appointments
     $existingSchedules = Schedule::where('date', '>=', now()->format('Y-m-d'))
         ->whereHas('appointment', function($query) {
+            // ONLY count pending and confirmed appointments
             $query->whereIn('status', ['pending', 'confirmed']);
         })
         ->select('date', 'time_id')
@@ -74,7 +76,6 @@ class AppointmentsController extends Controller
 
     return Inertia::render('Appointments/Create', $data);
 }
-
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -181,14 +182,26 @@ class AppointmentsController extends Controller
         $pets = Pet::where('user_id', $user->id)->select('id', 'name', 'user_id')->get();
     }
 
+    // Get existing schedules to prevent frontend double-booking 
+    // ONLY include schedules with pending or confirmed appointments
+    $existingSchedules = Schedule::where('date', '>=', now()->format('Y-m-d'))
+        ->where('appointment_id', '!=', $id) // Exclude current appointment
+        ->whereHas('appointment', function($query) {
+            // ONLY count pending and confirmed appointments
+            $query->whereIn('status', ['pending', 'confirmed']);
+        })
+        ->select('date', 'time_id')
+        ->get()
+        ->toArray();
+
     // Prepare appointment data with schedule information
     $appointmentData = [
         'id' => $appointment->id,
         'user_id' => $appointment->user_id,
         'pet_id' => $appointment->pet_id,
         'service_id' => $appointment->service_id,
-        'date' => $schedule ? $schedule->date : null, // Make sure this is set
-        'time_id' => $schedule ? $schedule->time_id : null, // Make sure this is set
+        'date' => $schedule ? $schedule->date : null,
+        'time_id' => $schedule ? $schedule->time_id : null,
         'status' => $appointment->status,
         'notes' => $appointment->notes,
         'staff_remarks' => $appointment->staff_remarks,
@@ -199,9 +212,6 @@ class AppointmentsController extends Controller
         ] : null,
     ];
 
-    // Debug: Log the data to check what's being sent
-    \Log::info('Appointment edit data:', $appointmentData);
-
     $data = [
         'appointment' => $appointmentData,
         'pets' => $pets,
@@ -210,6 +220,7 @@ class AppointmentsController extends Controller
             ->select('id', 'start_time', 'end_time', 'max_appointments', 'is_active', 'description')
             ->get(),
         'is_admin' => $isAdmin,
+        'existing_schedules' => $existingSchedules, // Pass existing schedules
     ];
 
     // Only load users if the current user is admin
@@ -219,7 +230,6 @@ class AppointmentsController extends Controller
 
     return Inertia::render('Appointments/Edit', $data);
 }
-
 
      public function update(Request $request, $id)
 {
@@ -280,6 +290,7 @@ class AppointmentsController extends Controller
     DB::transaction(function () use ($appointment, $validated) {
         // Check if status is being changed to 'completed'
         $isCompleting = $appointment->status !== 'completed' && $validated['status'] === 'completed';
+        $isCancelling = $appointment->status !== 'cancelled' && $validated['status'] === 'cancelled';
         
         // Update the appointment
         $appointment->update([
@@ -292,16 +303,32 @@ class AppointmentsController extends Controller
             'staff_remarks' => $validated['staff_remarks'],
         ]);
 
-        // If appointment is being marked as completed, delete the schedule
-        if ($isCompleting) {
-            Schedule::where('appointment_id', $appointment->id)->delete();
+        // Find the existing schedule
+        $schedule = Schedule::where('appointment_id', $appointment->id)->first();
+
+        if ($validated['status'] === 'completed') {
+            // If appointment is completed, update schedule status to 'completed' instead of deleting
+            if ($schedule) {
+                $schedule->update([
+                    'status' => 'completed',
+                    'notes' => $validated['notes'],
+                ]);
+            }
+        } elseif ($validated['status'] === 'cancelled') {
+            // If appointment is cancelled, update schedule status to 'cancelled'
+            if ($schedule) {
+                $schedule->update([
+                    'status' => 'cancelled',
+                    'notes' => $validated['notes'],
+                ]);
+            }
         } else {
-            // Only update/create schedule if appointment is NOT completed
-            $schedule = Schedule::where('appointment_id', $appointment->id)->first();
+            // For pending/confirmed appointments, update or create the schedule
             if ($schedule) {
                 $schedule->update([
                     'time_id' => $validated['time_id'],
                     'date' => $validated['date'],
+                    'status' => 'scheduled', // Reset to scheduled if status changed from completed/cancelled
                     'notes' => $validated['notes'],
                 ]);
             } else {

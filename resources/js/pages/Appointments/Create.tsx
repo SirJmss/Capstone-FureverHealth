@@ -423,11 +423,11 @@ export default function Create({ users = [], pets, services, timeslots, is_admin
                   <div className="mt-1">
                     {availableTimeslotsCount === 0 ? (
                       <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                        ❌ All timeslots are booked for this date. Please select a different date.
+                    All timeslots are booked for this date. Please select a different date.
                       </p>
                     ) : (
                       <p className="text-sm text-green-600 dark:text-green-400">
-                        ✅ {availableTimeslotsCount} timeslot{availableTimeslotsCount !== 1 ? 's' : ''} available
+                      {availableTimeslotsCount} timeslot{availableTimeslotsCount !== 1 ? 's' : ''} available
                         {bookedTimeSlots.size > 0 && ` • ${bookedTimeSlots.size} booked`}
                       </p>
                     )}

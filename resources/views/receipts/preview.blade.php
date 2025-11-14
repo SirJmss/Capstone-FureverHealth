@@ -3,130 +3,103 @@
 <head>
     <meta charset="utf-8">
     <title>Receipt Preview - {{ $appointment->id }}</title>
-    <style>
+     <style>
         body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            width: 90mm; /* Slightly less than full width */
+            height: 148mm;
+            margin: 0 auto; 
+            padding: 2mm;
             font-family: 'DejaVu Sans', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            font-size: 9px;
+            line-height: 1.2;
+            color: #000;
         }
-
-        .preview-container {
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            width: 420px;
-            transform: scale(1.15);
-            transform-origin: top center;
-            line-height: 1.4;
-        }
-
         .header {   
             text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
         }
-
         .clinic-name {
-            font-size: 16px;
+            font-size: 10px;
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 0px;
         }
-
         .clinic-tagline {
-            font-size: 12px;
+            font-size: 8px;
             color: #666;
         }
-
         .receipt-title {
-            font-size: 14px;
+            font-size: 10px;
             font-weight: bold;
-            margin: 6px 0;
+            margin:2px 0;
         }
-
         .receipt-info {
             justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 12px;
+            margin-bottom: 6px;
+            font-size: 8px;
         }
-
         .section {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
-
         .section-title {
-            font-size: 12px;
+            font-size: 8px;
             font-weight: bold;
             background-color: #f0f0f0;
-            padding: 5px 8px;
-            margin-bottom: 5px;
-            border-radius: 3px;
+            padding: 3px 5px;
+            margin-bottom: 3px;
+            border-radius: 2px;
         }
-
         .info-grid {
+            display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4px;
-            font-size: 11px;
+            gap: 3px;
+            font-size: 7px;
         }
-
         .service-details {
             background-color: #f8f8f8;
-            padding: 8px;
-            margin: 6px 0;
-            border-radius: 4px;
-            font-size: 11px;
+            padding: 5px;
+            margin: 4px 0;
+            border-radius: 3px;
+            font-size: 8px;
         }
-
         .price-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 11px;
+            margin: 5px 0;
+            font-size: 8px;
         }
-
         .price-table td {
-            padding: 4px 0;
+            padding: 3px 0;
         }
-
         .price-table .total {
             font-weight: bold;
             border-top: 1px solid #000;
-            font-size: 12px;
-            padding-top: 6px;
+            font-size: 8px;
+            padding-top: 4px;
         }
-
         .footer {
             text-align: center;
-            margin-top: 15px;
-            padding-top: 8px;
+            margin-top: 8px;
+            padding-top: 5px;
             border-top: 1px solid #ccc;
-            font-size: 10px;
+            font-size: 7px;
             color: #666;
         }
-
         .status-badge {
             display: inline-block;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 7px;
             font-weight: bold;
         }
-
         .status-completed { background-color: #d4edda; color: #155724; }
         .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
         .status-pending { background-color: #fff3cd; color: #856404; }
         .payment-paid { background-color: #d4edda; color: #155724; }
         .payment-unpaid { background-color: #fff3cd; color: #856404; }
-
         .text-right { text-align: right; }
-        .mb-1 { margin-bottom: 3px; }
+        .mb-1 { margin-bottom: 2px; }
     </style>
 </head>
 <body>

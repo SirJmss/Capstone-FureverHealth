@@ -29,8 +29,8 @@ interface AppointmentProps {
     user_id: number;
     pet_id: number;
     service_id: number;
-    date: string; // This now comes from schedule
-    time_id: number; // This now comes from schedule
+    date: string;
+    time_id: number;
     status: string;
     notes: string;
     staff_remarks?: string;
@@ -40,6 +40,10 @@ interface AppointmentProps {
       time_id: number;
     };
   };
+  existing_schedules?: Array<{
+    date: string;
+    time_id: number;
+  }>;
 }
 
 interface PageProps {
@@ -67,9 +71,11 @@ export default function EditAppointment({
   users,
   is_admin,
   appointment,
+  existing_schedules = [],
 }: AppointmentProps) {
   const [showPetModal, setShowPetModal] = useState(false);
   const { auth } = usePage<PageProps>().props;
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<Set<number>>(new Set());
   
   // Format date for input field (YYYY-MM-DD)
   const formatDateForInput = (dateString: string | null) => {
@@ -94,6 +100,9 @@ export default function EditAppointment({
     }
   };
 
+// Update booked time slots when date changes (excluding current appointment's timeslot)
+
+
   // Prioritize schedule data over appointment data
   const initialDate = formatDateForInput(appointment.schedule?.date || appointment.date);
   const initialTimeId = appointment.schedule?.time_id || appointment.time_id;
@@ -106,12 +115,6 @@ export default function EditAppointment({
   const [petList, setPetList] = useState(userPets);
 
   // Debug: Log the received data
-  useEffect(() => {
-    console.log('Appointment data received:', appointment);
-    console.log('Schedule data:', appointment.schedule);
-    console.log('Initial date:', initialDate);
-    console.log('Initial time ID:', initialTimeId);
-  }, [appointment, initialDate, initialTimeId]);
 
   // In the component, update the initial state to prioritize schedule data
   const { data, setData, put, processing, errors } = useForm({
@@ -126,6 +129,54 @@ export default function EditAppointment({
     payment_status: appointment.payment_status || "unpaid",
   });
 
+    useEffect(() => {
+    if (data.date) {
+      // Normalize the date format to ensure matching
+      const normalizedDate = data.date;
+      
+      console.log('=== EDIT PAGE: Updating booked timeslots ===');
+      console.log('Selected date:', normalizedDate);
+      console.log('Existing schedules:', existing_schedules);
+      console.log('Current appointment time ID:', initialTimeId);
+      console.log('Current appointment date:', initialDate);
+      
+      const bookedForDate = existing_schedules
+        .filter(schedule => {
+          // Handle both date formats - ensure they match
+          const scheduleDate = schedule.date.split(' ')[0];
+          const scheduleDateNormalized = new Date(scheduleDate).toISOString().split('T')[0];
+          const matches = scheduleDateNormalized === normalizedDate;
+          
+          // Exclude the current appointment's timeslot if it's the same date
+          const isCurrentAppointment = 
+            scheduleDateNormalized === initialDate && 
+            schedule.time_id === initialTimeId;
+          
+          if (matches && !isCurrentAppointment) {
+            console.log(`Found booked timeslot: ${schedule.time_id} for date ${scheduleDate}`);
+          }
+          
+          return matches && !isCurrentAppointment;
+        })
+        .map(schedule => schedule.time_id);
+      
+      console.log(`Final booked time slots for ${normalizedDate}:`, bookedForDate);
+      setBookedTimeSlots(new Set(bookedForDate));
+    } else {
+      setBookedTimeSlots(new Set());
+    }
+  }, [data.date, existing_schedules]); // Only these two dependencies like in create page
+
+  // Debug: Log the received data
+  useEffect(() => {
+    console.log('=== EDIT APPOINTMENT DEBUG ===');
+    console.log('Appointment data received:', appointment);
+    console.log('Schedule data:', appointment.schedule);
+    console.log('Initial date:', initialDate);
+    console.log('Initial time ID:', initialTimeId);
+    console.log('Existing schedules:', existing_schedules);
+    console.log('=============================');
+  }, [appointment, initialDate, initialTimeId, existing_schedules]);
   // Filter pets based on selected user (for admin)
   const filteredPets =
     is_admin && data.user_id
@@ -133,6 +184,24 @@ export default function EditAppointment({
       : !is_admin
       ? petList.filter(p => p.user_id === auth.user.id)
       : petList;
+
+  // Check if a timeslot is available (excluding current appointment's timeslot)
+  const isTimeslotAvailable = (timeslotId: number) => {
+    if (!data.date) return true;
+    
+    // Always allow the current appointment's timeslot
+    const isCurrentTimeslot = timeslotId === initialTimeId && data.date === initialDate;
+    if (isCurrentTimeslot) return true;
+    
+    const isAvailable = !bookedTimeSlots.has(timeslotId);
+    console.log(`Timeslot ${timeslotId} available: ${isAvailable} (current: ${isCurrentTimeslot})`);
+    return isAvailable;
+  };
+
+  // Get available timeslots count
+  const availableTimeslotsCount = filteredTimeslots.filter(timeslot => 
+    isTimeslotAvailable(timeslot.id)
+  ).length;
 
   // Handle date change and filter available timeslots
   const handleDateChange = (date: string) => {
@@ -197,6 +266,17 @@ export default function EditAppointment({
     
     // Skip date/timeslot validation for completed appointments
     if (data.status !== 'completed') {
+      // Frontend validation for double booking (excluding current appointment)
+      if (data.date && data.time_id) {
+        const selectedTimeId = Number(data.time_id);
+        const isCurrentTimeslot = selectedTimeId === initialTimeId && data.date === initialDate;
+        
+        if (!isCurrentTimeslot && !isTimeslotAvailable(selectedTimeId)) {
+          alert('This timeslot is already booked. Please select a different timeslot.');
+          return;
+        }
+      }
+
       // Final validation before submission for non-completed appointments
       if (data.status === 'completed' && data.payment_status !== 'paid') {
         alert('Completed appointments must be marked as paid. Please update the payment status.');
@@ -335,6 +415,8 @@ export default function EditAppointment({
             </Link>
           </div>
 
+         
+
           {/* Completed Appointment Warning */}
           {isCompletedAppointment && (
             <motion.div
@@ -393,9 +475,6 @@ export default function EditAppointment({
                 >
                   <Label htmlFor="date" className="text-gray-700 dark:text-gray-300 font-medium">
                     Appointment Date
-                    {!data.date && (
-                      <span className="text-sm text-red-500 ml-2">(No date set)</span>
-                    )}
                   </Label>
                   <Input
                     type="date"
@@ -406,10 +485,6 @@ export default function EditAppointment({
                     className="mt-2 h-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <InputError message={errors.date} className="mt-1" />
-                  {/* Debug info */}
-                  <p className="text-xs text-gray-500 mt-1">
-                    Raw date: {appointment.date} | Schedule date: {appointment.schedule?.date} | Formatted: {data.date}
-                  </p>
                 </motion.div>
 
                 <motion.div
@@ -428,19 +503,44 @@ export default function EditAppointment({
                     disabled={!data.date}
                   >
                     <option value="">
-                      {!data.date ? 'Select Date First' : filteredTimeslots.length === 0 ? 'No available timeslots' : 'Select Timeslot'}
+                      {!data.date 
+                        ? 'Select Date First' 
+                        : availableTimeslotsCount === 0 
+                          ? 'No available timeslots' 
+                          : `Select Timeslot (${availableTimeslotsCount} available)`
+                      }
                     </option>
-                    {filteredTimeslots.map((timeslot) => (
-                      <option key={timeslot.id} value={timeslot.id}>
-                        {formatTime(timeslot.start_time)} - {formatTime(timeslot.end_time)}
-                        {timeslot.description && ` (${timeslot.description})`}
-                      </option>
-                    ))}
+                    {filteredTimeslots.map((timeslot) => {
+                      const isAvailable = isTimeslotAvailable(timeslot.id);
+                      const isCurrentTimeslot = timeslot.id === initialTimeId && data.date === initialDate;
+                      return (
+                        <option 
+                          key={timeslot.id} 
+                          value={timeslot.id}
+                          disabled={!isAvailable}
+                          className={!isAvailable ? 'text-gray-400 bg-gray-100 dark:bg-gray-600 line-through' : ''}
+                        >
+                          {formatTime(timeslot.start_time)} - {formatTime(timeslot.end_time)}
+                          {timeslot.description && ` (${timeslot.description})`}
+                          {isCurrentTimeslot && ' - CURRENT'}
+                          {!isAvailable && !isCurrentTimeslot && ' - BOOKED'}
+                        </option>
+                      );
+                    })}
                   </select>
-                  {data.date && filteredTimeslots.length === 0 && (
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
-                      No available timeslots for the selected date.
-                    </p>
+                  {data.date && (
+                    <div className="mt-1">
+                      {availableTimeslotsCount === 0 ? (
+                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                      All timeslots are booked for this date. Please select a different date.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                       {availableTimeslotsCount} timeslot{availableTimeslotsCount !== 1 ? 's' : ''} available
+                          {bookedTimeSlots.size > 0 && ` • ${bookedTimeSlots.size} booked`}
+                        </p>
+                      )}
+                    </div>
                   )}
                   <InputError message={errors.time_id} className="mt-1" />
                 </motion.div>
@@ -657,7 +757,7 @@ export default function EditAppointment({
             >
               <Button
                 type="submit"
-                disabled={processing || (!is_admin && filteredPets.length === 0)}
+                disabled={processing || (!is_admin && filteredPets.length === 0) || (!!data.date && !isCompletedAppointment && availableTimeslotsCount === 0)}
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-lg shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
               >
                 {processing ? (
