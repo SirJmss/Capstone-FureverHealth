@@ -1,283 +1,303 @@
+'use client';
+
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { motion } from 'framer-motion';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
-import {
-  User, Mail, Phone, MapPin, Shield, ChevronLeft, CheckCircle
-} from 'lucide-react';
+import { Calendar, Clock, User, Package, Shield, Edit, ChevronLeft } from 'lucide-react';
 
 /* -------------------------------------------------
-   COLOR PALETTE + HASH FUNCTION (unchanged)
+   TYPES
 ------------------------------------------------- */
-const colors = [
-  'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
-  'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800',
-  'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
-  'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
-  'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800',
-  'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
-  'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800',
-  'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
-] as const;
-
-const getColorClass = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash % colors.length)];
-};
-
-/* -------------------------------------------------
-   PERMISSION DESCRIPTIONS (unchanged)
-------------------------------------------------- */
-const permissionDescriptions: Record<string, string> = {
-  'user.view': 'Can view user profiles and lists.',
-  'user.create': 'Can create new users in the system.',
-  'user.edit': 'Can modify existing user information.',
-  'user.delete': 'Can remove user accounts permanently.',
-  'roles.view': 'Can view all roles and their permissions.',
-  'roles.create': 'Can create new roles.',
-  'roles.edit': 'Can modify existing roles and permissions.',
-  'roles.delete': 'Can delete roles.',
-};
-
-/* -------------------------------------------------
-   TYPES – Fixed with InertiaPageProps
-------------------------------------------------- */
-interface UserProps {
+interface ServiceUser {
   id: number;
-  first_name?: string;
-  last_name?: string;
-  name?: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  phone?: string;
-  address?: string;
+}
+
+interface ServiceProps {
+  id: number;
+  name: string;
+  price: number;
+  user: ServiceUser;
+}
+
+interface AppointmentProps {
+  id: number;
+  appointment_date: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  pet: { id: number; name: string };
+  service: ServiceProps;
+  user: { id: number; first_name: string; last_name: string; email: string };
 }
 
 interface PageProps extends InertiaPageProps {
-  user: UserProps;
-  roles: string[];
-  permissions: string[];
+  appointment: AppointmentProps;
+  is_admin: boolean;
 }
 
 /* -------------------------------------------------
    BREADCRUMBS
 ------------------------------------------------- */
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
+const breadcrumbs = (petName: string): BreadcrumbItem[] => [
+  { title: 'Appointments', href: '/appointments' },
+  { title: petName, href: '' },
+];
+
+/* -------------------------------------------------
+   HELPERS
+------------------------------------------------- */
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800';
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
+    case 'completed':
+      return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800';
+  }
+};
 
 /* -------------------------------------------------
    COMPONENT
 ------------------------------------------------- */
-export default function Show() {
-  const { user, roles, permissions } = usePage<PageProps>().props;
+export default function ShowAppointment() {
+  const { appointment, is_admin } = usePage<PageProps>().props;
 
-  const fullName = user.first_name
-    ? `${user.first_name} ${user.last_name || ''}`.trim()
-    : user.name || 'Unknown User';
+  // Defensive: if appointment is missing
+  if (!appointment) {
+    return (
+      <AppLayout breadcrumbs={[{ title: 'Appointments', href: '/appointments' }]}>
+        <Head title="Appointment – Not Found" />
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
+          <div className="rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-2xl text-center">
+            <Shield className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Appointment Not Found
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              The appointment data is missing.
+            </p>
+            <Link href={route('appointments.index')}>
+              <button className="mt-4 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-teal-700">
+                Back to Appointments
+              </button>
+            </Link>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
-  const initials = user.first_name?.[0] || user.name?.[0] || 'U';
-  const lastInitial = user.last_name?.[0] || '';
+  const petName = appointment.pet.name;
+  const clientName = `${appointment.user.first_name} ${appointment.user.last_name}`;
+  const providerName = `${appointment.service.user.first_name} ${appointment.service.user.last_name}`;
 
   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title={`User – ${fullName}`} />
+    <AppLayout breadcrumbs={breadcrumbs(petName)}>
+      <Head title={`Appointment – ${petName}`} />
 
-      {/* MAIN CONTENT */}
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      
 
-        {/* Header */}
+      <motion.div
+        className="flex min-h-[80vh] items-center justify-center p-4 md:p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="w-full max-w-4xl rounded-2xl bg-white/80 dark:bg-gray-800/80 p-8 shadow-2xl backdrop-blur-xl md:p-10"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <User className="w-8 h-8 text-teal-600" />
-            User Profile
-          </h1>
-          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
-            {fullName} • ID: #{user.id}
-          </p>
-        </motion.div>
-
-        {/* Back Button - Mobile */}
-        <div className="sm:hidden mb-6">
-          <Link href={route('users.index')}>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          {/* Header */}
+          <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
             >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </motion.button>
-          </Link>
-        </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
+                Appointment Details
+              </h1>
+              <div className="mt-1 flex items-center gap-3">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  ID: #{appointment.id}
+                </span>
+                <motion.span
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${getStatusColor(
+                    appointment.status
+                  )}`}
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                </motion.span>
+              </div>
+            </motion.div>
 
-        {/* CARD */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-lg hover:border-teal-200 dark:hover:border-teal-700 transition-all"
-        >
-          {/* Header with Back Button (Desktop) */}
-          <div className="hidden sm:flex justify-end mb-4">
-            <Link href={route('users.index')}>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
+            <Link href={route('appointments.index')}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                <ChevronLeft className="w-4 h-4" />
-                Back to Users
-              </motion.button>
+                <ChevronLeft className="h-4 w-4" />
+                Back to Appointments
+              </motion.div>
             </Link>
           </div>
 
-          {/* Avatar */}
-          <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
-            {initials}
-            {lastInitial && <span className="ml-1">{lastInitial}</span>}
-          </div>
-
-          {/* User Name */}
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-              {fullName}
-            </h3>
-          </div>
-
           {/* Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
-            {/* Left: Contact Info */}
-            <div className="space-y-4">
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Left: Pet + Service */}
+            <motion.div
+              className="space-y-5"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Pet */}
               <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-500" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500 text-white shadow-md">
+                  <span className="text-lg">Paw</span>
+                </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
-                  <p className="font-medium text-gray-900 dark:text-white break-all">
-                    {user.email}
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pet</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{appointment.pet.name}</p>
+                </div>
+              </div>
+
+              {/* Service */}
+              <div className="flex items-center gap-3">
+                <Package className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Service</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{appointment.service.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    ₱{appointment.service.price.toLocaleString()}
                   </p>
                 </div>
               </div>
 
-              {user.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Phone</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {user.phone}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {user.address && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Address</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {user.address}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Roles */}
-            <div className="space-y-4">
+              {/* Service Provider */}
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-gray-500" />
+                <User className="h-5 w-5 text-gray-500" />
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Assigned Roles</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {roles.length > 0 ? roles.join(', ') : '—'}
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Provider</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{providerName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{appointment.service.user.email}</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right: Schedule + Client */}
+            <motion.div
+              className="space-y-5"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Schedule */}
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Date</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
                   </p>
                 </div>
               </div>
-            </div>
+
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Time</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {new Date(appointment.appointment_date).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Client */}
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Client</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{clientName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{appointment.user.email}</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Roles Tags */}
-          {roles && roles.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb bepal-2 flex items-center gap-1">
-                <Shield className="w-4 h-4" />
-                Roles
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {roles.map((role, i) => (
-                  <motion.span
-                    key={role}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border-2 ${getColorClass(role)}`}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {role.replace(/_/g, ' ')}
-                  </motion.span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Action Buttons */}
+          <motion.div
+            className="flex gap-3 border-t border-gray-200 pt-6 dark:border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            {is_admin && (
+              <Link href={route('appointments.edit', appointment.id)}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 rounded-xl border border-blue-300 px-6 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/20"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Appointment
+                </motion.div>
+              </Link>
+            )}
 
-          {/* Permissions Grid */}
-          {permissions && permissions.length > 0 ? (
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" />
-                Permissions
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {permissions.map((perm, i) => {
-                  const color = getColorClass(perm);
-                  const description =
-                    permissionDescriptions[perm] ||
-                    'No description available for this permission.';
-
-                  return (
-                    <motion.div
-                      key={perm}
-                      className={`p-4 rounded-xl border-2 flex flex-col gap-1 transition-all ${color} backdrop-blur-sm`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileHover={{
-                        scale: 1.03,
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                      }}
-                    >
-                      <span className="font-semibold text-sm">
-                        {perm.replace(/\./g, ' · ')}
-                      </span>
-                      <span className="text-xs leading-snug opacity-80">
-                        {description}
-                      </span>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-32 h-32 mx-auto mb-5 bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-full flex items-center justify-center">
-                <Shield className="w-16 h-16 text-teal-600 dark:text-teal-400" />
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                No permissions assigned.
-              </p>
-            </div>
-          )}
+            <Link href={route('appointments.index')}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 rounded-xl border border-blue-300 px-6 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/20"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                View All Appointments
+              </motion.div>
+            </Link>
+          </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </AppLayout>
   );
 }
