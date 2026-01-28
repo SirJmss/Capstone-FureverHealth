@@ -79,7 +79,7 @@ const mainNavItems: NavItem[] = [
     permission: 'access.permissions',
   },
   {
-    title: 'History',
+    title: 'Transaction History',
     href: '/history',
     icon: Clock,
      permission: 'access.history',
